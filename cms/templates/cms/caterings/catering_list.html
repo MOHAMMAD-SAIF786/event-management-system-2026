@@ -2,270 +2,367 @@
 {% load static %}
 
 {% block title %}
-  Room Design Management
+Catering Management - CMS
 {% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'cms/css/catering_list.css' %}" />
+<link rel="stylesheet" href="{% static 'cms/css/catering_list.css' %}">
 {% endblock %}
 
 {% block content %}
-  <div class="cms-container">
-    <!-- Header Section -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-      <div>
-        <h1><i class="fa-solid fa-utensils"></i> Catering & Banner Control</h1>
-        <p>Manage home page banners, package features, guest-pricing, and menu sections.</p>
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div>
+      <h1><i class="fa-solid fa-utensils"></i> Catering & Banner Control</h1>
+      <p>Manage catering packages, guest-pricing tiers, and menu items.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button type="button" class="btn-expo-primary" onclick="openAddModal()">
+        <i class="fa-solid fa-plus"></i> Add New Package
+      </button>
+    </div>
+  </div>
+
+  <!-- Catering Page Hero Management Card -->
+  <div class="banner-card">
+    <div class="banner-card-header">
+      <h3 class="banner-card-title">
+        <i class="fa-solid fa-image"></i> Catering Page Hero Banner Settings
+      </h3>
+      <span class="badge-pill">Hero Banner</span>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="banner-form-grid">
+      {% csrf_token %}
+      <input type="hidden" name="action_type" value="update_hero">
+
+      <div style="flex: 1; min-width: 220px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Title</label>
+        <input type="text" name="hero_title" value="{{ catering_page.hero_title }}" required class="expo-input" placeholder="Enter catering hero title">
       </div>
-      <div style="display: flex; gap: 10px;">
-        <a href="/admin/cms/cateringpackage/" target="_blank" class="btn-secondary" style="text-decoration: none; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-sliders"></i> Advanced Menu Builder (Django Admin)</a>
-        <button type="button" class="btn-primary" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> Add New Package</button>
+
+      <div style="flex: 2; min-width: 280px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Subtitle</label>
+        <input type="text" name="hero_subtitle" value="{{ catering_page.hero_subtitle }}" required class="expo-input" placeholder="Enter catering hero subtitle">
+      </div>
+
+      <div style="flex: 1; min-width: 220px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Image File</label>
+        <input type="file" name="hero_image" accept="image/*" style="font-size: 12px;">
+      </div>
+
+      <div>
+        <button type="submit" class="btn-expo-primary">
+          <i class="fa-solid fa-save"></i> Save Banner
+        </button>
+      </div>
+    </form>
+
+    {% if catering_page.hero_image %}
+      <div class="banner-preview-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="{{ catering_page.hero_image.url }}" alt="Catering Hero Banner Preview" class="banner-thumb" onclick="openFullImageModal('{{ catering_page.hero_image.url }}', 'Catering Hero Banner')">
+          <div>
+            <span style="display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Catering Banner</span>
+            <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ catering_page.hero_title|default:"Catering Hero Banner" }}</span>
+          </div>
+        </div>
+        <button type="button" class="btn-expo-secondary btn-sm" onclick="openFullImageModal('{{ catering_page.hero_image.url }}', 'Catering Hero Banner')">
+          <i class="fa-solid fa-expand"></i> Preview Image
+        </button>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Packages Table Card -->
+  <div class="expo-card">
+    <div class="table-header">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search Catering Package..." />
       </div>
     </div>
 
-    <!-- Packages Table Card -->
-    <div class="table-card">
-      <table class="cms-table">
+    <div class="table-responsive">
+      <table class="pkg-table">
         <thead>
           <tr>
-            <th>Banner / Image</th>
+            <th style="width: 90px;">Image</th>
             <th>Package Info</th>
-            <th>Price</th>
+            <th>Base Price</th>
             <th>Banner Highlights</th>
             <th>Features</th>
             <th>Status</th>
-            <th style="width: 120px;">Actions</th>
+            <th style="text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for pkg in packages %}
-            <tr>
+            <tr class="pkg-row">
               <td>
                 {% if pkg.image %}
-                  <img src="{{ pkg.image.url }}" alt="{{ pkg.name }}" class="room-img-thumb" />
+                  <img src="{{ pkg.image.url }}" alt="{{ pkg.name }}" class="pkg-thumb" onclick="openFullImageModal('{{ pkg.image.url }}', '{{ pkg.name|escapejs }}')" title="Click to view full image" />
                 {% else %}
-                  <div class="room-img-placeholder">
-                    <i class="fa-solid fa-image"></i>
+                  <div style="width: 80px; height: 54px; background: #f4f4f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #a1a1aa; border: 1px solid #dcdee0;">
+                    <i class="fa-solid fa-utensils"></i>
                   </div>
                 {% endif %}
               </td>
               <td>
-                <strong style="color: #0f172a; font-size: 1rem;">{{ pkg.name }}</strong>
+                <a href="{% url 'cms:package_detail' pkg.id %}" style="color: var(--text-main); font-size: 14px; font-weight: 700; text-decoration: none;" class="pkg-name-cell" title="View & Manage Package Details">
+                  {{ pkg.name }} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px; color: var(--text-muted); margin-left: 3px;"></i>
+                </a>
                 {% if pkg.badge %}
-                  <span style="background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 6px;">{{ pkg.badge }}</span>
+                  <span class="badge-expo badge-warning">{{ pkg.badge }}</span>
                 {% endif %}
-                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Slug: {{ pkg.slug }} | Class: {{ pkg.css_class|default:'default' }}</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Slug: {{ pkg.slug }} | Class: {{ pkg.css_class|default:'default' }}</div>
               </td>
-              <td style="color: #16a34a; font-weight: 700;">₹ {{ pkg.price }}</td>
+              <td class="price-mono">₹ {{ pkg.price }}</td>
               <td>
                 {% for bf in pkg.bannar_features.all %}
-                  <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; display: inline-block; margin: 2px;"><i class="fa-solid fa-star" style="font-size: 0.65rem;"></i> {{ bf.name }}</span>
+                  <span class="badge-expo badge-blue"><i class="fa-solid fa-star" style="font-size: 10px;"></i> {{ bf.name }}</span>
                 {% empty %}
-                  <span style="color: #cbd5e1; font-size: 0.85rem;">No banner tags</span>
+                  <span style="color: var(--text-muted); font-size: 12px;">No banner tags</span>
                 {% endfor %}
               </td>
               <td>
                 {% for f in pkg.features.all %}
-                  <span class="feature-badge">{{ f.name }}</span>
+                  <span class="badge-expo">{{ f.name }}</span>
                 {% empty %}
-                  <span style="color: #cbd5e1; font-size: 0.85rem;">No features</span>
+                  <span style="color: var(--text-muted); font-size: 12px;">No features</span>
                 {% endfor %}
               </td>
               <td>
-                {% if pkg.show_on_home %}
-                  <span style="color: #16a34a; font-size: 0.85rem; font-weight: 600;"><i class="fa-solid fa-eye"></i> Home Active</span>
-                {% else %}
-                  <span style="color: #94a3b8; font-size: 0.85rem;"><i class="fa-solid fa-eye-slash"></i> Hidden</span>
-                {% endif %}
+                <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
+                  <label class="toggle-switch">
+                    <input type="checkbox" {% if pkg.is_active %}checked{% endif %} onchange="toggleVenueStatus('{% url 'cms:catering_toggle_status' pkg.id %}', this)">
+                    <span class="slider round"></span>
+                  </label>
+                  {% if pkg.show_on_home %}
+                    <span style="color: #16a34a; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-eye"></i> Home Visible</span>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-eye-slash"></i> Home Hidden</span>
+                  {% endif %}
+                </div>
               </td>
               <td>
-                <!-- 1. Edit Button -->
-                <button type="button"
-                  style="background: none; border: none; color: #2563eb; cursor: pointer; font-size: 1rem; margin-right: 6px;"
-                  onclick="editPkg('{{ pkg.id }}', '{{ pkg.name|escapejs }}', '{{ pkg.price }}', '{{ pkg.badge|escapejs }}', '{{ pkg.css_class|escapejs }}', '{{ pkg.show_on_home|yesno:'true,false' }}', '{{ pkg.description|escapejs }}', '{% for f in pkg.features.all %}
-                    {{ f.name }}{% if not forloop.last %}, {% endif %}
-                  {% endfor %}', '{% for b in pkg.bannar_features.all %}
-                    {{ b.name }}{% if not forloop.last %}, {% endif %}
-                  {% endfor %}')">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-
-                <!-- 2. Eye Button (Fixed Here: pkg.id) -->
-                <a href="{% url 'cms:package_detail' pkg.id %}" class="btn btn-sm text-info" title="View & Edit Menu, Banner & Guests"><i class="fas fa-eye"></i></a>
-
-                <!-- 3. Delete Form -->
-                <form action="{% url 'cms:catering_delete' pkg.id %}" method="POST" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" onclick="return confirm('Kya aap ise delete karna chahte hain?');">Delete</button>
-                </form>
+                <div class="actions-cell">
+                  <a href="{% url 'cms:package_detail' pkg.id %}" class="action-btn-edit" title="Manage Details">
+                    <i class="fa-solid fa-sliders"></i> Details
+                  </a>
+                  <button type="button" class="action-btn-edit" onclick="editPackage('{{ pkg.id }}', '{{ pkg.name|escapejs }}', '{{ pkg.slug|escapejs }}', '{{ pkg.badge|escapejs }}', '{{ pkg.price }}', '{{ pkg.description|escapejs }}', '{{ pkg.css_class|escapejs }}', {{ pkg.is_active|yesno:'true,false' }}, {{ pkg.show_on_home|yesno:'true,false' }})" title="Edit Package">
+                    <i class="fa-solid fa-pen"></i> Edit
+                  </button>
+                  <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:catering_delete' pkg.id %}', '{{ pkg.name|escapejs }}')" class="action-btn-delete" title="Delete Package">
+                    <i class="fa-solid fa-trash"></i> Delete
+                  </a>
+                </div>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">No packages found. Add one to get started!</td>
+              <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                <i class="fa-solid fa-utensils" style="font-size: 32px; color: #dcdee0; margin-bottom: 8px; display: block;"></i>
+                No catering packages added yet. Click "+ Add New Package" to create one.
+              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+</div>
 
-  <!-- ================= ADD MODAL ================= -->
-  <div id="addModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>Add New Catering Package</h2>
-        <span class="close-btn" onclick="closeAddModal()">&times;</span>
-      </div>
-      <form action="{% url 'cms:catering_add' %}" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <div class="form-group">
-          <label>Package Title</label>
-          <input type="text" name="name" class="form-control" required placeholder="e.g. Royal Silver Buffet" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Starting Price (₹)</label>
-            <input type="number" step="0.01" name="price" class="form-control" required placeholder="450.00" />
-          </div>
-          <div class="form-group">
-            <label>Badge Tag (Optional)</label>
-            <input type="text" name="badge" class="form-control" placeholder="e.g. MOST POPULAR" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>CSS Class (Optional)</label>
-            <input type="text" name="css_class" class="form-control" placeholder="e.g. silver-theme" />
-          </div>
-          <div class="form-group" style="display: flex; align-items: center; margin-top: 24px;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" name="show_on_home" style="width: 18px; height: 18px;" checked />Show on Home Banner</label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Banner Highlight Tags (Comma separated)</label>
-          <input type="text" name="bannar_features" class="form-control" placeholder="e.g. 50+ Dishes, Live BBQ, Free Mocktail" />
-        </div>
-
-        <div class="form-group">
-          <label>General Features (Comma separated)</label>
-          <input type="text" name="features" class="form-control" placeholder="e.g. Mineral Water, Uniform Staff" />
-        </div>
-
-        <div class="form-group">
-          <label>Package Banner Image</label>
-          <input type="file" name="image" class="form-control" accept="image/*" />
-        </div>
-
-        <div class="form-group">
-          <label>Description</label>
-          <textarea name="description" class="form-control" rows="2"></textarea>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancel</button>
-          <button type="submit" class="btn-primary">Save Package</button>
-        </div>
-      </form>
+<!-- ADD PACKAGE MODAL -->
+<div id="addModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-plus"></i> Add Catering Package</h2>
+      <span class="close-btn" onclick="closeAddModal()">&times;</span>
     </div>
-  </div>
-
-  <!-- ================= EDIT MODAL ================= -->
-  <div id="editModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>Edit Package Banner & Info</h2>
-        <span class="close-btn" onclick="closeEditModal()">&times;</span>
+    <form method="POST" action="{% url 'cms:catering_add' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Package Name *</label>
+        <input type="text" name="name" required class="form-control" placeholder="e.g. Royal Shahi Feast">
       </div>
-      <form id="editForm" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-
+      <div class="form-row">
         <div class="form-group">
-          <label>Package Title</label>
-          <input type="text" id="edit_name" name="name" class="form-control" required />
+          <label>Slug (Unique Identifier) *</label>
+          <input type="text" name="slug" required class="form-control" placeholder="e.g. royal-shahi-feast">
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Starting Price (₹)</label>
-            <input type="number" step="0.01" id="edit_price" name="price" class="form-control" required />
-          </div>
-          <div class="form-group">
-            <label>Badge Tag</label>
-            <input type="text" id="edit_badge" name="badge" class="form-control" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>CSS Class</label>
-            <input type="text" id="edit_css" name="css_class" class="form-control" />
-          </div>
-          <div class="form-group" style="display: flex; align-items: center; margin-top: 24px;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="edit_home" name="show_on_home" style="width: 18px; height: 18px;" />Show on Home Banner</label>
-          </div>
-        </div>
-
         <div class="form-group">
-          <label>Banner Highlight Tags (Comma separated)</label>
-          <input type="text" id="edit_bannar_features" name="bannar_features" class="form-control" />
+          <label>Badge Tag (Optional)</label>
+          <input type="text" name="badge" class="form-control" placeholder="e.g. Most Popular">
         </div>
-
+      </div>
+      <div class="form-row">
         <div class="form-group">
-          <label>General Features (Comma separated)</label>
-          <input type="text" id="edit_features" name="features" class="form-control" />
+          <label>Base Price Per Plate (₹) *</label>
+          <input type="number" step="0.01" name="price" required class="form-control" placeholder="650.00">
         </div>
-
         <div class="form-group">
-          <label>Change Image</label>
-          <input type="file" name="image" class="form-control" accept="image/*" />
+          <label>CSS Card Theme Class</label>
+          <input type="text" name="css_class" class="form-control" placeholder="e.g. royal-gold, premium">
         </div>
-
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="edit_description" name="description" class="form-control" rows="2"></textarea>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
-          <button type="submit" class="btn-primary">Update Details</button>
-        </div>
-      </form>
-    </div>
+      </div>
+      <div class="form-group">
+        <label>Banner Image</label>
+        <input type="file" name="image" accept="image/*" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="3" class="form-control" placeholder="Describe package offerings..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Banner Highlights (comma separated)</label>
+        <input type="text" name="banner_features" class="form-control" placeholder="e.g. 5 Star Chefs, Welcome Mocktails, Live Chaat Counter">
+      </div>
+      <div class="form-group">
+        <label>General Features (comma separated)</label>
+        <input type="text" name="features" class="form-control" placeholder="e.g. Mineral Water, Uniformed Staff, Buffet Setup">
+      </div>
+      <div class="form-group" style="display: flex; gap: 20px;">
+        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <input type="checkbox" name="is_active" checked style="accent-color: #000000; width: 16px; height: 16px;">
+          <span>Active Status</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <input type="checkbox" name="show_on_home" checked style="accent-color: #000000; width: 16px; height: 16px;">
+          <span>Show on Home Page</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-expo-secondary" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-plus"></i> Create Package</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <script>
-    function openAddModal() {
-      document.getElementById('addModal').style.display = 'flex'
+<!-- EDIT PACKAGE MODAL -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-pen"></i> Edit Catering Package</h2>
+      <span class="close-btn" onclick="closeEditModal()">&times;</span>
+    </div>
+    <form id="editForm" method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Package Name *</label>
+        <input type="text" id="edit_name" name="name" required class="form-control">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Slug *</label>
+          <input type="text" id="edit_slug" name="slug" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Badge Tag</label>
+          <input type="text" id="edit_badge" name="badge" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Base Price (₹) *</label>
+          <input type="number" step="0.01" id="edit_price" name="price" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>CSS Card Theme Class</label>
+          <input type="text" id="edit_css_class" name="css_class" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Update Banner Image</label>
+        <input type="file" name="image" accept="image/*" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="edit_description" name="description" rows="3" class="form-control"></textarea>
+      </div>
+      <div class="form-group" style="display: flex; gap: 20px;">
+        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <input type="checkbox" id="edit_is_active" name="is_active" style="accent-color: #000000; width: 16px; height: 16px;">
+          <span>Active Status</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <input type="checkbox" id="edit_show_on_home" name="show_on_home" style="accent-color: #000000; width: 16px; height: 16px;">
+          <span>Show on Home Page</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-expo-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddModal() {
+  document.getElementById('addModal').style.display = 'flex';
+}
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+
+function editPackage(id, name, slug, badge, price, description, cssClass, isActive, showOnHome) {
+
+    const form = document.getElementById('editForm');
+
+    form.action = '/cms/catering/edit/' + id + '/';
+
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_slug').value = slug;
+    document.getElementById('edit_badge').value = badge;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_css_class').value = cssClass;
+    document.getElementById('edit_is_active').checked = isActive;
+    document.getElementById('edit_show_on_home').checked = showOnHome;
+
+    document.getElementById('editModal').style.display = 'flex';
+}
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+function toggleVenueStatus(url, checkbox) {
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json'
     }
-    function closeAddModal() {
-      document.getElementById('addModal').style.display = 'none'
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.status && data.error) {
+      alert('Error updating status: ' + data.error);
+      checkbox.checked = !checkbox.checked;
     }
-    function closeEditModal() {
-      document.getElementById('editModal').style.display = 'none'
-    }
-    
-    function editPkg(id, name, price, badge, css, home, desc, features, bannarFeats) {
-      document.getElementById('edit_name').value = name
-      document.getElementById('edit_price').value = price
-      document.getElementById('edit_badge').value = badge
-      document.getElementById('edit_css').value = css
-      document.getElementById('edit_home').checked = home === 'true'
-      document.getElementById('edit_description').value = desc
-      document.getElementById('edit_features').value = features
-      document.getElementById('edit_bannar_features').value = bannarFeats
-    
-      document.getElementById('editForm').action = '/cms/catering/edit/' + id + '/'
-      document.getElementById('editModal').style.display = 'flex'
-    }
-    
-    window.onclick = function (e) {
-      if (e.target === document.getElementById('addModal')) closeAddModal()
-      if (e.target === document.getElementById('editModal')) closeEditModal()
-    }
-  </script>
+  })
+  .catch(err => {
+    console.error(err);
+    checkbox.checked = !checkbox.checked;
+  });
+}
+
+// Live search filter across catering packages
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const val = this.value.toLowerCase().trim();
+      const rows = document.querySelectorAll('.pkg-row');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(val) ? '' : 'none';
+      });
+    });
+  }
+});
+</script>
 {% endblock %}

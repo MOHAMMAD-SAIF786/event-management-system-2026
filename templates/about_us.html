@@ -63,93 +63,32 @@ About Us | RoyalEvents
     Everything you need for a perfect event
   </p>
   <div class="cards-container">
-    <!-- CARD 1 -->
-    <div class="flip-card">
-      <div class="flip-inner">
-        <div class="card-front">
-          <div class="icon">📅</div>
-          <h3>Easy Booking</h3>
-          <p>
-            Book halls and catering online easily.
-          </p>
-        </div>
-        <div class="card-back">
-          <h3>Easy Booking</h3>
-          <p>
-            Fast and simple booking system with
-            availability checking.
-          </p>
-          <button>
-            Explore
-          </button>
-        </div>
-      </div>
+    <div class="feature-card">
+      <div class="icon">📅</div>
+      <h3>Easy Booking</h3>
+      <p>Fast and simple booking system with real-time availability checking.</p>
+      <a href="/#halls" class="feature-btn">Explore Halls</a>
     </div>
-    <!-- CARD 2 -->
-    <div class="flip-card">
-      <div class="flip-inner">
-        <div class="card-front">
-          <div class="icon">🍽️</div>
-          <h3>Best Catering</h3>
-          <p>
-            Premium quality food with multiple packages.
-          </p>
-        </div>
-        <div class="card-back">
-          <h3>Catering</h3>
-          <p>
-            Delicious food prepared by professional
-            chefs for every occasion.
-          </p>
-          <button>
-            Explore
-          </button>
-        </div>
-      </div>
+
+    <div class="feature-card">
+      <div class="icon">🍽️</div>
+      <h3>Best Catering</h3>
+      <p>Premium quality food prepared by professional chefs for every occasion.</p>
+      <a href="{% url 'catering' %}" class="feature-btn">View Catering</a>
     </div>
-    <!-- CARD 3 -->
-    <div class="flip-card">
-      <div class="flip-inner">
-        <div class="card-front">
-          <div class="icon">📸</div>
-          <h3>Photography</h3>
-          <p>
-            Professional photography & videography.
-          </p>
-        </div>
-        <div class="card-back">
-          <h3>Photography</h3>
-          <p>
-            Capture your memorable moments with
-            our creative team.
-          </p>
-          <button>
-            Explore
-          </button>
-        </div>
-      </div>
+
+    <div class="feature-card">
+      <div class="icon">📸</div>
+      <h3>Photography</h3>
+      <p>Capture your memorable moments with our creative team and professional decor.</p>
+      <a href="{% url 'cms:gallery_frontend' %}" class="feature-btn">View Gallery</a>
     </div>
-    <!-- CARD 4 -->
-    <div class="flip-card">
-      <div class="flip-inner">
-        <div class="card-front">
-          <div class="icon">🎵</div>
-          <h3>DJ & Music</h3>
-          <p>
-            Enjoy music and entertainment.
-          </p>
-        </div>
-        <div class="card-back">
-          <h3>DJ Setup</h3>
-          <p>
-            Complete sound system and entertainment
-            for your events.
-          </p>
-          <button>
-            Explore
-          </button>
-        </div>
-      </div>
+
+    <div class="feature-card">
+      <div class="icon">🎵</div>
+      <h3>DJ & Music</h3>
+      <p>Complete sound system and premium entertainment arrangements for your events.</p>
+      <a href="{% url 'contact' %}" class="feature-btn">Inquire Now</a>
     </div>
   </div>
 </section>

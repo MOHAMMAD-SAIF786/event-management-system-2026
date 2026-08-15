@@ -36,12 +36,21 @@ Hall Details
   <div class="top-grid">
     <!-- Left -->
 
-    <div class="glass-card image-card">
+    <div class="expo-card image-card">
       {% if hall.image %}
-      <img src="{{ hall.image.url }}" />
+      <img src="{{ hall.image.url }}" alt="{{ hall.name }}" onclick="openLightbox('{{ hall.image.url }}', '{{ hall.name|escapejs }}')" onerror="this.src='{% static 'cms/images/placeholder.svg' %}'" title="Click to view full image" />
+      {% else %}
+      <img src="{% static 'cms/images/placeholder.svg' %}" alt="No Image" />
       {% endif %}
 
-      <div class="image-footer">{{ hall.name }}</div>
+      <div class="image-footer">
+        <span>{{ hall.name }}</span>
+        {% if hall.image %}
+        <button type="button" class="btn-expo-secondary" onclick="openLightbox('{{ hall.image.url }}', '{{ hall.name|escapejs }}')" style="padding: 4px 10px; font-size: 12px; height: 32px;">
+          <i class="fa-solid fa-expand"></i> View Full Image
+        </button>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Right -->
@@ -192,30 +201,28 @@ Hall Details
         FEATURES
 =========================  -->
 
+  <!--  =========================
+        FEATURES
+=========================  -->
+
   <div class="glass-card">
     <div class="section-header">
       <h2>
         <i class="fa-solid fa-star"></i>
-
         Hall Features
       </h2>
 
-      <a href="#" class="small-add-btn">
-        <i class="fa-solid fa-plus"></i>
-
-        Add Feature
-      </a>
+      <button type="button" class="small-add-btn" onclick="openAddFeatureModal('{{ hall.id }}')">
+        <i class="fa-solid fa-plus"></i> Add Feature
+      </button>
     </div>
 
     <table class="mini-table">
       <thead>
         <tr>
           <th>Icon</th>
-
           <th>Title</th>
-
           <th>Subtitle</th>
-
           <th width="130">Action</th>
         </tr>
       </thead>
@@ -226,16 +233,12 @@ Hall Details
           <td>
             <i class="{{ feature.icon }}"></i>
           </td>
-
           <td>{{ feature.title }}</td>
-
           <td>{{ feature.subtitle }}</td>
-
           <td>
             <div class="action-buttons">
-              <a href="#" class="edit-btn"><i class="fa-solid fa-pen"></i></a>
-
-              <a href="#" class="delete-btn"><i class="fa-solid fa-trash"></i></a>
+              <button type="button" class="edit-btn" onclick="editFeature('{{ feature.id }}', '{{ feature.title|escapejs }}', '{{ feature.subtitle|escapejs }}', '{{ feature.icon|escapejs }}')" title="Edit Feature"><i class="fa-solid fa-pen"></i></button>
+              <a href="{% url 'cms:hall_feature_delete' feature.id %}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this feature?')" title="Delete Feature"><i class="fa-solid fa-trash"></i></a>
             </div>
           </td>
         </tr>
@@ -247,6 +250,7 @@ Hall Details
       </tbody>
     </table>
   </div>
+
   <!--  =========================
         GALLERY
 =========================  -->
@@ -255,30 +259,30 @@ Hall Details
     <div class="section-header">
       <h2>
         <i class="fa-solid fa-images"></i>
-
         Hall Gallery
       </h2>
 
-      <a href="#" class="small-add-btn">
-        <i class="fa-solid fa-upload"></i>
-
-        Upload Image
-      </a>
+      <button type="button" class="small-add-btn" onclick="openAddGalleryModal('{{ hall.id }}')">
+        <i class="fa-solid fa-upload"></i> Upload Image
+      </button>
     </div>
 
     <div class="gallery-grid">
       {% for image in hall.gallery.all %}
       <div class="gallery-card">
-        <img src="{{ image.hall_image.url }}" alt="" />
+        <img src="{{ image.hall_image.url }}" alt="Gallery Image" onclick="openLightbox('{{ image.hall_image.url }}', '{{ hall.name|escapejs }} Gallery Image')" title="Click to view full image" />
 
-        <div class="gallery-overlay">
-          <a href="#" class="edit-btn"><i class="fa-solid fa-pen"></i></a>
-
-          <a href="#" class="delete-btn"><i class="fa-solid fa-trash"></i></a>
+        <div class="gallery-overlay" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+          <button type="button" class="view-btn" onclick="openLightbox('{{ image.hall_image.url }}', '{{ hall.name|escapejs }} Gallery Image')" title="View Full Image">
+            <i class="fa-solid fa-expand"></i>
+          </button>
+          <a href="{% url 'cms:hall_gallery_delete' image.id %}" class="delete-btn" style="background: rgba(220, 38, 38, 0.9); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;" onclick="return confirm('Are you sure you want to delete this gallery photo?')" title="Delete Image">
+            <i class="fa-solid fa-trash"></i>
+          </a>
         </div>
       </div>
       {% empty %}
-      <p class="empty-row">No Gallery Images Added</p>
+      <p class="empty-row" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">No Gallery Images Added</p>
       {% endfor %}
     </div>
   </div>
@@ -287,72 +291,69 @@ Hall Details
         FURNITURE
 =========================  -->
 
-  <div class="section-header">
+  <div class="glass-card">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>
+        <i class="fa-solid fa-chair"></i>
+        Hall Furniture
+      </h2>
 
-    <h2>
-      <i class="fa-solid fa-star"></i>
-      Hall Furniture
-    </h2>
-
-    <a href="{% url 'cms:furniture_add' %}?hall={{ hall.id }}">
-      + Add Furniture
-    </a>
-
-  </div>
-
-  {% for category in hall.furniture_categories.all %}
-  <div class="category-box">
-    <div class="category-header">
-      <h3>{{ category.name }}</h3>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="small-add-btn" onclick="openAddFurnitureCatModal('{{ hall.id }}')">
+          <i class="fa-solid fa-plus"></i> Add Category
+        </button>
+        <a href="{% url 'cms:furniture_add' %}?hall={{ hall.id }}" class="small-add-btn">
+          <i class="fa-solid fa-plus"></i> Add Item
+        </a>
+      </div>
     </div>
 
-    <table class="mini-table">
-      <thead>
-        <tr>
-          <th>Name</th>
+    {% for category in hall.furniture_categories.all %}
+    <div class="category-box">
+      <div class="category-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">
+          {{ category.name }}
+          <a href="{% url 'cms:furniture_category_delete' category.id %}" style="color: #dc2626; margin-left: 10px; font-size: 0.85rem;" onclick="return confirm('Is category ke saare furniture items delete ho jayenge. Confirm?')" title="Delete Category">
+            <i class="fa-solid fa-trash"></i>
+          </a>
+        </h3>
+      </div>
 
-          <th>Price</th>
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Unit</th>
+            <th width="130">Action</th>
+          </tr>
+        </thead>
 
-          <th>Unit</th>
-
-          <th width="130">Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for item in category.items.all %}
-        <tr>
-          <td>{{ item.name }}</td>
-
-          <td>₹ {{ item.price }}</td>
-
-          <td>{{ item.unit }}</td>
-
-          <td>
-            <div class="action-buttons">
-              <button type="button" class="edit-btn"onclick="editFurniture('{{ item.id }}','{{ item.name|escapejs }}','{{ item.price }}','{{ item.unit|escapejs }}','{{ item.default_quantity }}','{{ item.min_quantity }}','{{ item.max_quantity }}',{{ item.is_required|yesno:'true,false' }})"><i
-                class="fa-solid fa-pen"></i></button>
-
-              {% comment %} <a href="{% url 'cms:hall_feature_delete' feature.id %}" class="delete-btn"
-                onclick="return confirm('Delete this feature?')">
-
-                <i class="fa-solid fa-trash"></i>
-              </a> {% endcomment %}
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4" class="empty-row">No Furniture Added</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        <tbody>
+          {% for item in category.items.all %}
+          <tr>
+            <td style="font-weight: 600; color: var(--text-main);">{{ item.name }}</td>
+            <td class="price-mono">₹ {{ item.price }}</td>
+            <td>{{ item.unit }}</td>
+            <td>
+              <div class="action-buttons">
+                <button type="button" class="edit-btn" onclick="editFurniture('{{ item.id }}','{{ item.name|escapejs }}','{{ item.price }}','{{ item.unit|escapejs }}','{{ item.default_quantity }}','{{ item.min_quantity }}','{{ item.max_quantity }}',{{ item.is_required|yesno:'true,false' }})" title="Edit Furniture"><i class="fa-solid fa-pen"></i></button>
+                <a href="{% url 'cms:furniture_delete' item.id %}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this furniture item?')" title="Delete Furniture"><i class="fa-solid fa-trash"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="empty-row">No Furniture Added</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% empty %}
+    <p class="empty-row" style="padding: 16px 0; text-align: center; color: var(--text-muted);">No Furniture Categories Added</p>
+    {% endfor %}
   </div>
-  {% empty %}
-  <p class="empty-row">No Furniture Categories</p>
-  {% endfor %}
-</div>
 <!--  =========================
         STAGE DESIGNS
 =========================  -->
@@ -393,15 +394,13 @@ Hall Details
       {% for stage in category.designs.all %}
       <div class="stage-card">
         {% if stage.image %}
-        <img src="{{ stage.image.url }}" alt="{{ stage.name }}" />
+        <img src="{{ stage.image.url }}" alt="{{ stage.name }}" onclick="openLightbox('{{ stage.image.url }}', '{{ stage.name|escapejs }}')" title="Click to view full image" />
         {% else %}
-        <div
-          style="height: 150px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b;">
-          No Image</div>
+        <div style="height: 110px; background: #fafafa; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px;">No Image</div>
         {% endif %}
 
         <h4>{{ stage.name }}</h4>
-        <p>₹ {{ stage.price }}</p>
+        <p class="price-mono">₹ {{ stage.price }}</p>
 
         <div class="card-actions">
           <!-- EDIT BUTTON (MODAL POPUP TRIGGER) -->
@@ -694,6 +693,111 @@ Hall Details
   </div>
 </div>
 </div>
+<!-- ADD FEATURE MODAL -->
+<div id="addFeatureModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Add Hall Feature</h2>
+      <span class="close-btn" onclick="closeAddFeatureModal()">&times;</span>
+    </div>
+    <form action="{% url 'cms:hall_feature_save' hall.id %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Feature Title (e.g. Spacious Stage, Centralized AC)</label>
+        <input type="text" name="title" required placeholder="Enter feature title" />
+      </div>
+      <div class="form-group">
+        <label>Subtitle (Optional)</label>
+        <input type="text" name="subtitle" placeholder="e.g. Accommodates large events" />
+      </div>
+      <div class="form-group">
+        <label>Icon CSS Class (Optional)</label>
+        <input type="text" name="icon" placeholder="fa-solid fa-star" value="fa-solid fa-check" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" onclick="closeAddFeatureModal()">Cancel</button>
+        <button type="submit" class="save-btn">Add Feature</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT FEATURE MODAL -->
+<div id="editFeatureModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Edit Hall Feature</h2>
+      <span class="close-btn" onclick="closeEditFeatureModal()">&times;</span>
+    </div>
+    <form id="editFeatureForm" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Feature Title</label>
+        <input type="text" id="edit_feature_title" name="title" required />
+      </div>
+      <div class="form-group">
+        <label>Subtitle</label>
+        <input type="text" id="edit_feature_subtitle" name="subtitle" />
+      </div>
+      <div class="form-group">
+        <label>Icon Class</label>
+        <input type="text" id="edit_feature_icon" name="icon" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" onclick="closeEditFeatureModal()">Cancel</button>
+        <button type="submit" class="save-btn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- UPLOAD GALLERY IMAGE MODAL -->
+<div id="addGalleryModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Upload Hall Gallery Photo</h2>
+      <span class="close-btn" onclick="closeAddGalleryModal()">&times;</span>
+    </div>
+    <form action="{% url 'cms:hall_gallery_save' hall.id %}" method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Photo Name / Title (Optional)</label>
+        <input type="text" name="title" placeholder="Enter photo title or event name" />
+      </div>
+      <div class="form-group">
+        <label>Select Photo</label>
+        <input type="file" name="hall_image" accept="image/*" required />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" onclick="closeAddGalleryModal()">Cancel</button>
+        <button type="submit" class="save-btn">Upload Image</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD FURNITURE CATEGORY MODAL -->
+<div id="addFurnitureCatModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Add Furniture Category</h2>
+      <span class="close-btn" onclick="closeAddFurnitureCatModal()">&times;</span>
+    </div>
+    <form action="{% url 'cms:furniture_category_add' %}" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="hall" value="{{ hall.id }}" />
+      <div class="form-group">
+        <label>Category Name (e.g. VIP Seating, Dining Chairs)</label>
+        <input type="text" name="category" required placeholder="Enter category name" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="cancel-btn" onclick="closeAddFurnitureCatModal()">Cancel</button>
+        <button type="submit" class="save-btn">Create Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- FURNITURE EDIT MODAL -->
 <div id="editFurnitureModal" class="modal-overlay" style="display: none;">
   <div class="modal-content">
@@ -751,8 +855,58 @@ Hall Details
     </form>
   </div>
 </div>
+
 <script>
-  // Add Category Modal
+  // Features Modals
+  function openAddFeatureModal(hallId) {
+    document.getElementById('addFeatureModal').style.display = 'flex';
+  }
+  function closeAddFeatureModal() {
+    document.getElementById('addFeatureModal').style.display = 'none';
+  }
+  function editFeature(id, title, subtitle, icon) {
+    document.getElementById('editFeatureModal').style.display = 'flex';
+    document.getElementById('edit_feature_title').value = title;
+    document.getElementById('edit_feature_subtitle').value = subtitle || '';
+    document.getElementById('edit_feature_icon').value = icon || 'fa-solid fa-star';
+    document.getElementById('editFeatureForm').action = '/cms/hall-feature/' + id + '/edit/';
+  }
+  function closeEditFeatureModal() {
+    document.getElementById('editFeatureModal').style.display = 'none';
+  }
+
+  // Gallery Modal
+  function openAddGalleryModal(hallId) {
+    document.getElementById('addGalleryModal').style.display = 'flex';
+  }
+  function closeAddGalleryModal() {
+    document.getElementById('addGalleryModal').style.display = 'none';
+  }
+
+  // Furniture Category & Edit Item Modals
+  function openAddFurnitureCatModal(hallId) {
+    document.getElementById('addFurnitureCatModal').style.display = 'flex';
+  }
+  function closeAddFurnitureCatModal() {
+    document.getElementById('addFurnitureCatModal').style.display = 'none';
+  }
+  function editFurniture(id, name, price, unit, defaultQty, minQty, maxQty, isRequired) {
+    document.getElementById('editFurnitureModal').style.display = 'flex';
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_unit').value = unit;
+    document.getElementById('edit_default').value = defaultQty;
+    document.getElementById('edit_min').value = (minQty && minQty !== 'None') ? minQty : '';
+    document.getElementById('edit_max').value = (maxQty && maxQty !== 'None') ? maxQty : '';
+    document.getElementById('edit_required').checked = Boolean(isRequired);
+    document.getElementById('editFurnitureForm').action = '/cms/furniture/edit/' + id + '/';
+  }
+  function closeFurnitureModal() {
+    document.getElementById('editFurnitureModal').style.display = 'none';
+  }
+
+  // Stage Category & Stage Modals
   function openAddCategoryModal(hallId) {
     document.getElementById('category_hall_id').value = hallId;
     document.getElementById('addCategoryModal').style.display = 'flex';
@@ -760,8 +914,6 @@ Hall Details
   function closeAddCategoryModal() {
     document.getElementById('addCategoryModal').style.display = 'none';
   }
-
-  // Add Stage Modal
   function openAddStageModal(categoryId) {
     document.getElementById('add_category_id').value = categoryId;
     document.getElementById('addStageModal').style.display = 'flex';
@@ -769,8 +921,6 @@ Hall Details
   function closeAddStageModal() {
     document.getElementById('addStageModal').style.display = 'none';
   }
-
-  // Edit Stage Modal
   function editStage(id, name, price) {
     document.getElementById('editStageModal').style.display = 'flex';
     document.getElementById('edit_stage_name').value = name;
@@ -781,20 +931,7 @@ Hall Details
     document.getElementById('editStageModal').style.display = 'none';
   }
 
-  // Close Modals on Outside Click
-  window.onclick = function (e) {
-    let editModal = document.getElementById('editStageModal');
-    let addModal = document.getElementById('addStageModal');
-    let catModal = document.getElementById('addCategoryModal');
-
-    if (e.target === editModal) editModal.style.display = 'none';
-    if (e.target === addModal) addModal.style.display = 'none';
-    if (e.target === catModal) catModal.style.display = 'none';
-  };
-</script>
-
-<script>
-  // Add Category Modal
+  // Services Modals
   function openAddServiceCatModal(hallId) {
     document.getElementById('service_cat_hall_id').value = hallId;
     document.getElementById('addServiceCatModal').style.display = 'flex';
@@ -802,8 +939,6 @@ Hall Details
   function closeAddServiceCatModal() {
     document.getElementById('addServiceCatModal').style.display = 'none';
   }
-
-  // Add Service Modal
   function openAddServiceModal(catId) {
     document.getElementById('add_service_cat_id').value = catId;
     document.getElementById('addServiceModal').style.display = 'flex';
@@ -811,8 +946,6 @@ Hall Details
   function closeAddServiceModal() {
     document.getElementById('addServiceModal').style.display = 'none';
   }
-
-  // Edit Service Modal
   function editService(id, name, price) {
     document.getElementById('editServiceModal').style.display = 'flex';
     document.getElementById('edit_service_name').value = name;
@@ -823,15 +956,56 @@ Hall Details
     document.getElementById('editServiceModal').style.display = 'none';
   }
 
-  // Outside Click Close Modals
+  // Global Outside Click Listener to Close Modals
   window.addEventListener('click', function (e) {
-    let catModal = document.getElementById('addServiceCatModal');
-    let addModal = document.getElementById('addServiceModal');
-    let editModal = document.getElementById('editServiceModal');
+    const modals = [
+      'addFeatureModal', 'editFeatureModal', 'addGalleryModal',
+      'addFurnitureCatModal', 'editFurnitureModal',
+      'addCategoryModal', 'addStageModal', 'editStageModal',
+      'addServiceCatModal', 'addServiceModal', 'editServiceModal'
+    ];
+    modals.forEach(id => {
+      let m = document.getElementById(id);
+      if (m && e.target === m) m.style.display = 'none';
+    });
+  });
+</script>
 
-    if (e.target === catModal) catModal.style.display = 'none';
-    if (e.target === addModal) addModal.style.display = 'none';
-    if (e.target === editModal) editModal.style.display = 'none';
+<!-- GLOBAL LIGHTBOX MODAL -->
+<div id="imageLightboxModal" class="lightbox-modal" style="display: none;" onclick="closeLightbox(event)">
+  <span class="lightbox-close" onclick="closeLightboxDirect()">&times;</span>
+  <img id="lightboxImage" class="lightbox-content" src="" alt="Full view" />
+  <div id="lightboxCaption" class="lightbox-caption"></div>
+</div>
+
+<script>
+  function openLightbox(imageSrc, captionText) {
+    if (typeof openFullImageModal === 'function') {
+      openFullImageModal(imageSrc, captionText);
+    } else {
+      let modal = document.getElementById('imageLightboxModal');
+      let img = document.getElementById('lightboxImage');
+      let cap = document.getElementById('lightboxCaption');
+      if (img) img.src = imageSrc;
+      if (cap) cap.innerText = captionText || '';
+      if (modal) modal.style.display = 'flex';
+    }
+  }
+
+  function closeLightboxDirect() {
+    document.getElementById('imageLightboxModal').style.display = 'none';
+  }
+
+  function closeLightbox(event) {
+    if (event.target.id === 'imageLightboxModal' || event.target.className === 'lightbox-close') {
+      document.getElementById('imageLightboxModal').style.display = 'none';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeLightboxDirect();
+    }
   });
 </script>
 {% endblock %}

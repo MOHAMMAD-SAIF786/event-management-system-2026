@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Bookings
+  Bookings Management - Royal CMS
 {% endblock %}
 
 {% block extra_css %}
@@ -10,119 +10,133 @@
 {% endblock %}
 
 {% block content %}
-  <div class="booking-container">
-    <!-- ========================= -->
+  <div class="dashboard-container">
     <!-- PAGE HEADER -->
-    <!-- ========================= -->
-
     <div class="booking-header">
       <div>
-        <h1>Bookings</h1>
-        <p>Manage all event bookings</p>
+        <h1><i class="fa-solid fa-calendar-check"></i> Bookings Management</h1>
+        <p>Manage, search, and track all event reservations across all halls.</p>
       </div>
 
-      <a href="#" class="btn-primary">
-        <i class="fa-solid fa-plus"></i>
-        New Booking
+      <a href="{% url 'cms:booking_add' %}" class="btn-expo-primary">
+        <i class="fa-solid fa-plus"></i> New Booking
       </a>
     </div>
 
-    <!-- ========================= -->
     <!-- FILTER SECTION -->
-    <!-- ========================= -->
-
     <div class="booking-filter">
-      <form method="get">
-        <div class="search-box">
+      <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; width: 100%;">
+        <div class="search-box" style="flex: 1; min-width: 260px;">
           <i class="fa-solid fa-magnifying-glass"></i>
-
-          <input type="text" name="search" placeholder="Search by Booking ID, Customer or Phone" />
+          <input type="text" name="search" value="{{ search|default:'' }}" placeholder="Search by Booking ID, Customer name or Phone..." />
         </div>
 
-        <select name="status">
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="cancelled">Cancelled</option>
+        <select name="status" style="width: 180px;">
+          <option value="">All Statuses</option>
+          <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+          <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+          <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
         </select>
 
-        <button type="submit">
-          <i class="fa-solid fa-filter"></i>
-
-          Filter
+        <button type="submit" class="btn-expo-primary">
+          <i class="fa-solid fa-filter"></i> Filter
         </button>
       </form>
     </div>
 
-    <!-- ========================= -->
-    <!-- TABLE -->
-    <!-- ========================= -->
-
-    <div class="booking-table-wrapper">
-      <table class="booking-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-
-            <th>Customer</th>
-
-            <th>Phone</th>
-
-            <th>Event</th>
-
-            <th>Event Date</th>
-
-            <th>Total</th>
-
-            <th>Status</th>
-
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for booking in bookings %}
+    <!-- BOOKINGS TABLE -->
+    <div class="expo-card" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">
+        <table class="booking-table">
+          <thead>
             <tr>
-              <td>#{{ booking.id }}</td>
-
-              <td>{{ booking.customer_name }}</td>
-
-              <td>{{ booking.customer_phone }}</td>
-
-              <td>{{ booking.event_type }}</td>
-
-              <td>{{ booking.event_date }}</td>
-
-              <td>₹ {{ booking.total_amount }}</td>
-
-              <td>
-                {% if booking.status == 'confirmed' %}
-                  <span class="status confirmed">Confirmed</span>
-                {% elif booking.status == 'pending' %}
-                  <span class="status pending">Pending</span>
-                {% elif booking.status == 'cancelled' %}
-                  <span class="status cancelled">Cancelled</span>
-                {% endif %}
-              </td>
-
-              <td>
-                <div class="action-buttons">
-                  <a href="{% url 'cms:booking_detail' booking.id %}" class="view-btn" title="View"><i class="fa-solid fa-eye"></i></a>
-
-                  <a href="{% url 'cms:booking_edit' booking.id %}" class="edit-btn" title="Edit"><i class="fa-solid fa-pen"></i></a>
-
-                  <a href="{% url 'cms:booking_delete' booking.id %}" class="delete-btn" onclick="return confirm('Are you sure you want to cancel this booking?')"><i class="fa-solid fa-ban"></i></a>
-                </div>
-              </td>
+              <th>Booking ID</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Event Type</th>
+              <th>Event Date</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="8" class="empty">No Bookings Found</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {% for booking in bookings %}
+              <tr>
+                <td style="font-weight: 600; color: var(--text-main);">#BK-{{ booking.id }}</td>
+
+                <td style="font-weight: 600; color: var(--text-main);">{{ booking.customer.name }}</td>
+
+                <td>{{ booking.customer.phone }}</td>
+
+                <td><span class="badge-expo">{{ booking.event_type }}</span></td>
+
+                <td>{{ booking.event_date|date:"M d, Y" }}</td>
+
+                <td class="price-mono">₹ {{ booking.total_amount|floatformat:2 }}</td>
+
+                <td>
+                  {% if booking.status|lower == 'confirmed' %}
+                    <span class="badge-expo badge-success">Confirmed</span>
+                  {% elif booking.status|lower == 'pending' %}
+                    <span class="badge-expo badge-warning">Pending</span>
+                  {% elif booking.status|lower == 'cancelled' %}
+                    <span class="badge-expo badge-danger">Cancelled</span>
+                  {% else %}
+                    <span class="badge-expo">{{ booking.status|title }}</span>
+                  {% endif %}
+                </td>
+
+                <td style="text-align: right;">
+                  <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                    <a href="{% url 'quotation' booking.id %}" target="_blank" class="btn-expo-secondary btn-sm" title="View / Print Invoice">
+                      <i class="fa-solid fa-file-invoice"></i> Invoice
+                    </a>
+                    <a href="{% url 'cms:booking_detail' booking.id %}" class="btn-expo-secondary btn-sm" title="View Booking Details">
+                      <i class="fa-solid fa-eye"></i> View
+                    </a>
+                    <a href="{% url 'cms:booking_edit' booking.id %}" class="btn-expo-secondary btn-sm" title="Edit Booking">
+                      <i class="fa-solid fa-pen"></i> Edit
+                    </a>
+                    <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:booking_delete' booking.id %}', 'Booking #BK-{{ booking.id }}')" class="btn-expo-danger btn-sm" title="Cancel Booking">
+                      <i class="fa-solid fa-ban"></i> Cancel
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="empty" style="text-align: center; padding: 32px; color: var(--text-muted);">No bookings found matching your search.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      {% if bookings.paginator.num_pages > 1 %}
+        <div class="expo-pagination">
+          <span class="pagination-info">
+            Showing Page <strong>{{ bookings.number }}</strong> of <strong>{{ bookings.paginator.num_pages }}</strong> ({{ bookings.paginator.count }} total)
+          </span>
+
+          <div class="pagination-links">
+            {% if bookings.has_previous %}
+              <a href="?page={{ bookings.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </a>
+            {% endif %}
+
+            {% if bookings.has_next %}
+              <a href="?page={{ bookings.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

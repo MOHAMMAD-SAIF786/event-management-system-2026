@@ -1,384 +1,327 @@
 {% extends 'cms/base.html' %}
 {% load static %}
 
-{% block css %}
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'cms/css/dashboard.css' %}" />
-{% endblock  %}
+{% endblock %}
 
 {% block title %}
-  Dashboard
+Dashboard - Royal CMS
 {% endblock %}
 
 {% block content %}
-  <div class="dashboard-container">
-    <!-- ========================= -->
-    <!-- PAGE HEADER -->
-    <!-- ========================= -->
+<div class="dashboard-container">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Welcome back, <strong>{{ request.user.username }}</strong></p>
+    </div>
 
-    <div class="page-header">
+    <div class="header-actions">
+      <a href="{% url 'cms:booking_add' %}" class="btn-expo-primary">
+        <i class="fa-solid fa-plus"></i> New Booking
+      </a>
+      <a href="{% url 'cms:booking_list' %}" class="btn-expo-secondary">
+        <i class="fa-solid fa-file-invoice"></i> Manage Invoices
+      </a>
+    </div>
+  </div>
+
+  <!-- HOMEPAGE HERO SETTINGS CARD -->
+  <div class="banner-card">
+    <div class="banner-card-header">
+      <h3 class="banner-card-title">
+        <i class="fa-solid fa-image"></i> Homepage Hero Banner Management
+      </h3>
+      <span class="badge-pill">Hero Banner</span>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="banner-form-grid">
+      {% csrf_token %}
+      <input type="hidden" name="action_type" value="update_home_hero">
+
+      <div style="flex: 1; min-width: 220px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Title</label>
+        <input type="text" name="hero_title" value="{{ homepage.hero_title }}" required class="expo-input" placeholder="Enter headline title">
+      </div>
+
+      <div style="flex: 2; min-width: 280px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Subtitle / Description</label>
+        <input type="text" name="hero_description" value="{{ homepage.hero_description }}" required class="expo-input" placeholder="Enter subtitle or tag line">
+      </div>
+
+      <div style="flex: 1; min-width: 220px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Image File</label>
+        <input type="file" name="hero_image" accept="image/*" style="font-size: 12px;">
+      </div>
+
       <div>
-        <h1>Dashboard</h1>
-
-        <p>
-          Welcome back,
-          <strong>{{ request.user.username }}</strong>
-        </p>
+        <button type="submit" class="btn-expo-primary">
+          <i class="fa-solid fa-save"></i> Save Banner
+        </button>
       </div>
+    </form>
 
-      <div class="header-actions">
-        <button class="action-btn">
-          <i class="fa-solid fa-plus"></i>
-
-          New Booking
+    {% if homepage.hero_image %}
+      <div class="banner-preview-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="{{ homepage.hero_image.url }}" alt="Hero Banner Preview" class="banner-thumb" onclick="openFullImageModal('{{ homepage.hero_image.url }}', 'Homepage Hero Banner')">
+          <div>
+            <span style="display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Hero Image</span>
+            <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ homepage.hero_title|default:"Homepage Hero Banner" }}</span>
+          </div>
+        </div>
+        <button type="button" class="btn-expo-secondary btn-sm" onclick="openFullImageModal('{{ homepage.hero_image.url }}', 'Homepage Hero Banner')">
+          <i class="fa-solid fa-expand"></i> Preview Image
         </button>
+      </div>
+    {% endif %}
+  </div>
 
-        <button class="action-btn secondary">
-          <i class="fa-solid fa-file-invoice"></i>
-
-          Generate Invoice
-        </button>
+  <!-- METRIC STAT CARDS -->
+  <div class="dashboard-cards">
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div>
+      </div>
+      <div class="card-content">
+        <span>Total Bookings</span>
+        <h2>{{ total_bookings }}</h2>
+        <small><i class="fa-solid fa-arrow-trend-up"></i> All time</small>
       </div>
     </div>
 
-    <!-- ========================= -->
-    <!-- DASHBOARD CARDS -->
-    <!-- ========================= -->
-
-    <div class="dashboard-cards">
-      <!-- TOTAL BOOKING -->
-
-      <div class="dashboard-card booking-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-calendar-check"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Total Bookings</span>
-
-          <h2>{{ total_bookings }}</h2>
-
-          <small>
-            <i class="fa-solid fa-arrow-trend-up"></i>
-
-            All Bookings
-          </small>
-        </div>
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-clock" style="color: #d97706;"></i></div>
       </div>
-
-      <!-- PENDING -->
-
-      <div class="dashboard-card pending-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-clock"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Pending</span>
-
-          <h2>{{ pending_bookings }}</h2>
-
-          <small>Waiting Approval</small>
-        </div>
-      </div>
-
-      <!-- CONFIRMED -->
-
-      <div class="dashboard-card confirmed-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-circle-check"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Confirmed</span>
-
-          <h2>{{ confirmed_bookings }}</h2>
-
-          <small>Successfully Confirmed</small>
-        </div>
-      </div>
-
-      <!-- CANCELLED -->
-
-      <div class="dashboard-card cancelled-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-circle-xmark"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Cancelled</span>
-
-          <h2>{{ cancelled_bookings }}</h2>
-
-          <small>Booking Cancelled</small>
-        </div>
-      </div>
-
-      <!-- TODAY -->
-
-      <div class="dashboard-card today-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-calendar-day"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Today's Booking</span>
-
-          <h2>{{ today_bookings }}</h2>
-
-          <small>{{ today_bookings }} Today</small>
-        </div>
-      </div>
-
-      <!-- REVENUE -->
-
-      <div class="dashboard-card revenue-card">
-        <div class="card-icon">
-          <i class="fa-solid fa-indian-rupee-sign"></i>
-        </div>
-
-        <div class="card-content">
-          <span>Total Revenue</span>
-
-          <h2>₹ {{ revenue }}</h2>
-
-          <small>Confirmed Payments</small>
-        </div>
+      <div class="card-content">
+        <span>Pending</span>
+        <h2>{{ pending_bookings }}</h2>
+        <small>Awaiting approval</small>
       </div>
     </div>
 
-    <!-- ========================= -->
-    <!-- MAIN CONTENT -->
-    <!-- ========================= -->
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-circle-check" style="color: #16a34a;"></i></div>
+      </div>
+      <div class="card-content">
+        <span>Confirmed</span>
+        <h2>{{ confirmed_bookings }}</h2>
+        <small>Active & verified</small>
+      </div>
+    </div>
 
-    <div class="dashboard-grid">
-      <!-- ========================= -->
-      <!-- RECENT BOOKINGS -->
-      <!-- ========================= -->
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-circle-xmark" style="color: #dc2626;"></i></div>
+      </div>
+      <div class="card-content">
+        <span>Cancelled</span>
+        <h2>{{ cancelled_bookings }}</h2>
+        <small>Cancelled bookings</small>
+      </div>
+    </div>
 
-      <div class="dashboard-box">
-        <div class="box-header">
-          <h3>
-            <i class="fa-solid fa-calendar-days"></i>
-            Recent Bookings
-          </h3>
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-calendar-day"></i></div>
+      </div>
+      <div class="card-content">
+        <span>Today's Events</span>
+        <h2>{{ today_bookings }}</h2>
+        <small>Scheduled for today</small>
+      </div>
+    </div>
 
-          <a href="#" class="view-all">View All</a>
-        </div>
+    <div class="dashboard-card">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      </div>
+      <div class="card-content">
+        <span>Total Revenue</span>
+        <h2>₹ {{ revenue|floatformat:2 }}</h2>
+        <small>Confirmed revenue</small>
+      </div>
+    </div>
+  </div>
 
-        <table class="booking-table">
+  <!-- MAIN DASHBOARD CONTENT GRID -->
+  <div class="dashboard-grid">
+    <!-- RECENT BOOKINGS TABLE -->
+    <div class="dashboard-box">
+      <div class="box-header">
+        <h3><i class="fa-solid fa-calendar-days"></i> Recent Bookings</h3>
+        <a href="{% url 'cms:booking_list' %}" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      <div class="dashboard-table-wrap">
+        <table class="cms-table">
           <thead>
             <tr>
-              <th>ID</th>
-
+              <th style="width: 50px;">ID</th>
               <th>Customer</th>
-
               <th>Event</th>
-
               <th>Date</th>
-
               <th>Status</th>
-
               <th>Amount</th>
-
-              <th>Action</th>
+              <th style="text-align: right;">Action</th>
             </tr>
           </thead>
-
           <tbody>
             {% for booking in recent_bookings %}
-              <tr>
-                <td>#{{ booking.id }}</td>
-
-                <td>
+            <tr>
+              <td style="font-weight: 600; color: var(--text-main);">#{{ booking.id }}</td>
+              <td>
+                <div class="customer-meta">
                   <strong>{{ booking.customer.name }}</strong>
-
-                  <br />
-
                   <small>{{ booking.customer.phone }}</small>
-                </td>
-
-                <td>{{ booking.event_type }}</td>
-
-                <td>{{ booking.event_date }}</td>
-
-                <td>
-                  {% if booking.status == 'confirmed' %}
-                    <span class="status confirmed">Confirmed</span>
-                  {% elif booking.status == 'pending' %}
-                    <span class="status pending">Pending</span>
-                  {% elif booking.status == 'cancelled' %}
-                    <span class="status cancelled">Cancelled</span>
-                  {% else %}
-                    <span class="status draft">Draft</span>
-                  {% endif %}
-                </td>
-
-                <td>₹ {{ booking.total_amount }}</td>
-
-                <td>
-                  <button class="table-btn"><i class="fa-solid fa-eye"></i></button>
-                </td>
-              </tr>
+                </div>
+              </td>
+              <td>{{ booking.event_type }}</td>
+              <td>{{ booking.event_date|date:"M d, Y" }}</td>
+              <td>
+                {% if booking.status == 'confirmed' %}
+                <span class="status confirmed">Confirmed</span>
+                {% elif booking.status == 'pending' %}
+                <span class="status pending">Pending</span>
+                {% elif booking.status == 'cancelled' %}
+                <span class="status cancelled">Cancelled</span>
+                {% else %}
+                <span class="status draft">Draft</span>
+                {% endif %}
+              </td>
+              <td class="price-mono">₹ {{ booking.total_amount|floatformat:2 }}</td>
+              <td style="text-align: right;">
+                <a href="{% url 'cms:booking_detail' booking.id %}" class="btn-expo-secondary btn-sm"
+                  style="padding: 4px 10px; font-size: 12px;">
+                  <i class="fa-solid fa-eye"></i> View
+                </a>
+              </td>
+            </tr>
             {% empty %}
-              <tr>
-                <td colspan="7">No Bookings Available</td>
-              </tr>
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                No bookings recorded yet.
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-
-      <!-- ========================= -->
-      <!-- QUICK ACTIONS -->
-      <!-- ========================= -->
-
-      <div class="dashboard-sidebar">
-        <div class="dashboard-box">
-          <div class="box-header">
-            <h3>Quick Actions</h3>
-          </div>
-
-          <div class="quick-actions">
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-plus"></i>
-
-              <span>New Booking</span>
-            </a>
-
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-hotel"></i>
-
-              <span>Add Hall</span>
-            </a>
-
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-bed"></i>
-
-              <span>Add Room</span>
-            </a>
-
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-utensils"></i>
-
-              <span>Catering</span>
-            </a>
-
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-images"></i>
-
-              <span>Gallery</span>
-            </a>
-
-            <a href="#" class="quick-card">
-              <i class="fa-solid fa-file-invoice"></i>
-
-              <span>Invoices</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- ========================================= -->
-    <!-- ANALYTICS SECTION -->
-    <!-- ========================================= -->
-
-    <div class="analytics-grid">
-      <!-- Revenue Chart -->
-
-      <div class="dashboard-box chart-box">
-        <div class="box-header">
-          <h3>
-            <i class="fa-solid fa-chart-line"></i>
-
-            Revenue Analytics
-          </h3>
-        </div>
-
-        <canvas id="revenueChart"></canvas>
-      </div>
-
-      <!-- Booking Status -->
-
-      <div class="dashboard-box">
-        <div class="box-header">
-          <h3>Booking Statistics</h3>
-        </div>
-
-        <div class="stats-list">
-          <div class="stat-item">
-            <span>Confirmed</span>
-
-            <strong>{{ confirmed_bookings }}</strong>
-          </div>
-
-          <div class="stat-item">
-            <span>Pending</span>
-
-            <strong>{{ pending_bookings }}</strong>
-          </div>
-
-          <div class="stat-item">
-            <span>Cancelled</span>
-
-            <strong>{{ cancelled_bookings }}</strong>
-          </div>
-
-          <div class="stat-item">
-            <span>Total Revenue</span>
-
-            <strong>₹ {{ revenue }}</strong>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- ========================================= -->
-    <!-- BOTTOM SECTION -->
-    <!-- ========================================= -->
+    <!-- QUICK ACTIONS SIDEBAR -->
+    <div class="dashboard-box">
+      <div class="box-header">
+        <h3><i class="fa-solid fa-bolt"></i> Quick Actions</h3>
+      </div>
 
-    <div class="bottom-grid">
-      <!-- Calendar -->
+      <div class="quick-actions">
+        <a href="{% url 'cms:booking_add' %}" class="quick-card">
+          <i class="fa-solid fa-plus"></i>
+          <span>New Booking</span>
+        </a>
 
-      <div class="dashboard-box">
-        <div class="box-header">
-          <h3>
-            <i class="fa-solid fa-calendar-days"></i>
+        <a href="{% url 'cms:hall_add' %}" class="quick-card">
+          <i class="fa-solid fa-hotel"></i>
+          <span>Add Hall</span>
+        </a>
 
-            Calendar
-          </h3>
-        </div>
+        <a href="{% url 'cms:room_list' %}" class="quick-card">
+          <i class="fa-solid fa-bed"></i>
+          <span>Add Room</span>
+        </a>
 
-        <div id="calendar">
-          <h2>{{ today_bookings }}</h2>
+        <a href="{% url 'cms:catering_list' %}" class="quick-card">
+          <i class="fa-solid fa-utensils"></i>
+          <span>Catering</span>
+        </a>
 
-          <p>Bookings Today</p>
+        <a href="{% url 'cms:gallery_dashboard' %}" class="quick-card">
+          <i class="fa-solid fa-images"></i>
+          <span>Gallery</span>
+        </a>
+
+        <a href="{% url 'cms:service_list' %}" class="quick-card">
+          <i class="fa-solid fa-concierge-bell"></i>
+          <span>Services</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS SECTION -->
+  <div class="analytics-grid">
+    <!-- REVENUE CHART -->
+    <div class="dashboard-box chart-box">
+      <div class="box-header" style="flex-wrap: wrap; gap: 10px;">
+        <h3><i class="fa-solid fa-chart-line"></i> Revenue Analytics</h3>
+        <div class="chart-filter-tabs">
+          <button type="button" class="chart-filter-btn" data-period="today"
+            onclick="updateRevenueChart('today', this)">Today</button>
+          <button type="button" class="chart-filter-btn" data-period="week"
+            onclick="updateRevenueChart('week', this)">This Week</button>
+          <button type="button" class="chart-filter-btn active" data-period="month"
+            onclick="updateRevenueChart('month', this)">This Month</button>
+          <button type="button" class="chart-filter-btn" data-period="year"
+            onclick="updateRevenueChart('year', this)">This Year</button>
+          <button type="button" class="chart-filter-btn" data-period="all" onclick="updateRevenueChart('all', this)">All
+            Time</button>
         </div>
       </div>
 
-      <!-- Upcoming -->
+      <div class="chart-legend-bar"
+        style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; gap: 6px;"><span
+            style="width: 16px; height: 3px; background: #171717; border-radius: 2px; display: inline-block;"></span>
+          Confirmed Revenue</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px;"><span
+            style="width: 16px; height: 3px; border-top: 2px dashed #71717a; display: inline-block;"></span> Projected
+          (Confirmed + Pending)</span>
+      </div>
 
-      <div class="dashboard-box">
-        <div class="box-header">
-          <h3>Upcoming Events</h3>
+      <canvas id="revenueChart" style="max-height: 280px;"></canvas>
+    </div>
+
+    <!-- BOOKING STATS BREAKDOWN -->
+    <div class="dashboard-box">
+      <div class="box-header">
+        <h3><i class="fa-solid fa-pie-chart"></i> Booking Summary</h3>
+      </div>
+
+      <div class="stats-list">
+        <div class="stat-item">
+          <span>Confirmed ({{ confirmed_bookings }})</span>
+          <strong style="color: #16a34a;" class="price-mono">₹ {{ revenue|floatformat:2 }}</strong>
         </div>
 
-        <div class="event-list">
-          {% for booking in recent_bookings %}
-            <div class="event-card">
-              <div>
-                <h4>{{ booking.customer_name }}</h4>
+        <div class="stat-item">
+          <span>Pending ({{ pending_bookings }})</span>
+          <strong style="color: #d97706;" class="price-mono">₹ {{ pending_revenue|floatformat:2 }}</strong>
+        </div>
 
-                <small>{{ booking.event_date }}</small>
-              </div>
+        <div class="stat-item">
+          <span>Cancelled ({{ cancelled_bookings }})</span>
+          <strong style="color: #dc2626;" class="price-mono">₹ {{ cancelled_revenue|floatformat:2 }}</strong>
+        </div>
 
-              <span>{{ booking.event_type }}</span>
-            </div>
-          {% endfor %}
+        <div class="stat-item" style="border-top: 2px solid var(--border-color); margin-top: 4px; padding-top: 12px;">
+          <span>Projected Total</span>
+          <strong style="color: #09090b; font-size: 16px;" class="price-mono">₹ {{ projected_revenue|floatformat:2 }}</strong>
+        </div>
+
+        <div class="stat-item dark-card" style="background: #09090b !important; border-color: #09090b !important; color: #ffffff !important;">
+          <span style="color: #a1a1aa !important;">Confirmed Revenue</span>
+          <strong style="color: #ffffff !important; font-size: 16px;" class="price-mono text-white">₹ {{ revenue|floatformat:2 }}</strong>
         </div>
       </div>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</div>
 
-  <script src="{% static 'cms/js/dashboard.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'cms/js/dashboard.js' %}"></script>
 {% endblock %}

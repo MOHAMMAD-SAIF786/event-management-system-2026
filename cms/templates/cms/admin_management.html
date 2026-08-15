@@ -1,0 +1,124 @@
+{% extends "cms/base.html" %}
+{% load static %}
+
+{% block title %}Admin Management | Royal CMS{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="page-header">
+        <div>
+            <h1><i class="fa-solid fa-user-shield"></i> Admin Management</h1>
+            <p>Superadmin panel to assign and manage CMS Admin privileges.</p>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                <i class="fa-solid fa-circle-info"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Assign New Admin Form -->
+    <div class="expo-card">
+        <div class="expo-card-header">
+            <h2 class="expo-card-title"><i class="fa-solid fa-user-plus"></i> Assign Admin Role</h2>
+            <span class="badge-pill">Privilege Control</span>
+        </div>
+        <form method="POST" action="{% url 'cms:admin_management' %}" style="display: flex; gap: 12px; align-items: center; max-width: 540px; flex-wrap: wrap;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_admin">
+            <select name="user_id" required class="expo-input" style="flex: 1; min-width: 240px;">
+                <option value="">-- Select Registered User --</option>
+                {% for u in non_admin_users %}
+                    <option value="{{ u.id }}">{{ u.username }} ({% if u.email %}{{ u.email }}{% else %}No email{% endif %})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-expo-primary" style="white-space: nowrap;">
+                <i class="fa-solid fa-user-plus"></i> Promote to Admin
+            </button>
+        </form>
+    </div>
+
+    <!-- Active CMS Staff & Admins List -->
+    <div class="expo-card">
+        <div class="expo-card-header">
+            <h2 class="expo-card-title"><i class="fa-solid fa-users-gear"></i> Active Administrators</h2>
+            <span class="badge-pill">{{ admin_profiles|length }} Active</span>
+        </div>
+        <div class="table-responsive">
+            <table class="cms-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Assigned By</th>
+                        <th>Date Granted</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in admin_profiles %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-main);">{{ profile.user.username }}</td>
+                        <td>{{ profile.user.email|default:"—" }}</td>
+                        <td>
+                            <span class="badge-status {% if profile.role == 'developer' %}badge-confirmed{% elif profile.role == 'superadmin' %}badge-pending{% else %}badge-draft{% endif %}">
+                                {{ profile.get_role_display }}
+                            </span>
+                        </td>
+                        <td>{{ profile.assigned_by.username|default:"System / Shell" }}</td>
+                        <td>{{ profile.created_at|date:"M d, Y" }}</td>
+                        <td style="text-align: right;">
+                            {% if profile.role == 'admin' %}
+                            <form method="POST" action="{% url 'cms:admin_management' %}" style="display: inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="revoke_admin">
+                                <input type="hidden" name="user_id" value="{{ profile.user.id }}">
+                                <button type="submit" class="btn-expo-danger btn-sm" onclick="return confirm('Revoke admin access for {{ profile.user.username }}?')">
+                                    <i class="fa-solid fa-user-xmark"></i> Revoke Admin
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="badge-expo"><i class="fa-solid fa-lock"></i> Protected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                            No CMS admin profiles found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if admin_profiles.paginator.num_pages > 1 %}
+            <div class="expo-pagination">
+                <span class="pagination-info">
+                    Showing Page <strong>{{ admin_profiles.number }}</strong> of <strong>{{ admin_profiles.paginator.num_pages }}</strong> ({{ admin_profiles.paginator.count }} total)
+                </span>
+
+                <div class="pagination-links">
+                    {% if admin_profiles.has_previous %}
+                        <a href="?page={{ admin_profiles.previous_page_number }}">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </a>
+                    {% endif %}
+
+                    {% if admin_profiles.has_next %}
+                        <a href="?page={{ admin_profiles.next_page_number }}">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

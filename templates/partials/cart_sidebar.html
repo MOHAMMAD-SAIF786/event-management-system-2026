@@ -1,0 +1,32 @@
+{% load static %}
+<!-- Cart Backdrop Overlay -->
+<div id="cartBackdrop" class="cart-backdrop" onclick="closeCartSidebar()"></div>
+
+<!-- Slide-Over Cart Sidebar -->
+<div id="cartSidebar" class="cart-sidebar">
+    <div class="cart-sidebar-header">
+        <h3><i class="fa-solid fa-shopping-cart"></i> Your Event Cart</h3>
+        <button class="cart-close-btn" onclick="closeCartSidebar()" title="Close Cart">&times;</button>
+    </div>
+
+    <div class="cart-sidebar-body" id="cartSidebarBody">
+        <!-- Dynamic content rendered by cart.js -->
+        <div class="cart-empty-state">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <p>Your cart is empty</p>
+            <small>Browse halls, rooms, and catering packages to build your event.</small>
+        </div>
+    </div>
+
+    <div class="cart-sidebar-footer" id="cartSidebarFooter">
+        <div class="cart-summary-row">
+            <span>Total Estimated Cost:</span>
+            <strong id="cartSidebarGrandTotal">₹0</strong>
+        </div>
+        <div class="cart-action-buttons">
+            <a href="{% url 'cart' %}" class="btn-cart-secondary"><i class="fa-solid fa-list-check"></i> View Full Cart</a>
+            <a href="{% url 'booking_overview' %}" class="btn-cart-primary"><i class="fa-solid fa-arrow-right"></i> Proceed to Checkout</a>
+        </div>
+        <button class="btn-clear-cart" onclick="RoyalCart.clear()"><i class="fa-solid fa-trash-can"></i> Clear Cart</button>
+    </div>
+</div>

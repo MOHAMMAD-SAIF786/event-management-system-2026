@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Catering | RoyalEvents  
+  Catering | RoyalEvents
 {% endblock %}
 
 {% block extra_css %}
@@ -10,33 +10,145 @@
 {% endblock %}
 
 {% block content %}
-<section class="catering-hero">
-    <div class="hero-content">
-        <h1>Catering Packages</h1>
-        <p>Select the perfect menu for your event</p>
+  <!--   =====================================================
+     CATERING HERO BANNER
+=====================================================   -->
+
+  <section class="catering-hero">
+    {% if catering_page.hero_image %}
+      <img src="{{ catering_page.hero_image.url }}" alt="Catering Packages" class="catering-hero-image" />
+    {% endif %}
+
+    <div class="catering-hero-overlay"></div>
+
+    <div class="catering-hero-content">
+      <h1>{{ catering_page.hero_title }}</h1>
+
+      <p>{{ catering_page.hero_subtitle }}</p>
+
+      <div class="hero-gold-line"></div>
     </div>
-</section>
+  </section>
+  <section class="catering-packages-section">
+    <!--    =========================
+         SECTION HEADING
+    =========================    -->
 
-<section class="catering-packages">
+    <div class="catering-section-heading">
+      <span class="section-label">OUR CATERING</span>
 
-    {% for package in packages %}
-    <div class="package-card {{ package.css_class }}">
-        {% if package.badge %}
-            <span class="badge">
-                {{ package.badge }}
+      <h1>Perfect Packages for Every Celebration</h1>
+
+      <p>Delicious food, beautifully prepared for your special moments.</p>
+    </div>
+
+    <!--    =========================
+         PACKAGES
+    =========================    -->
+
+    <div class="catering-packages-list">
+      {% for package in packages %}
+        <article class="catering-package-row
+            {% cycle 'image-left' 'image-right' %}">
+          <!--    =========================
+                 IMAGE
+            =========================    -->
+
+          <div class="package-image-wrapper">
+            {% if package.image %}
+              <img src="{{ package.image.url }}" alt="{{ package.name }}" class="package-image" />
+            {% else %}
+              <div class="package-no-image">
+                <i class="fa-solid fa-utensils"></i>
+              </div>
+            {% endif %}
+
+            <!-- BADGE -->
+
+            {% if package.badge %}
+              <span class="package-badge">{{ package.badge }}</span>
+            {% endif %}
+          </div>
+
+          <!--    =========================
+                 CONTENT
+            =========================    -->
+
+          <div class="package-content">
+            <!-- NUMBER -->
+
+            <span class="package-number">
+              {% if forloop.counter < 10 %}
+                0{{ forloop.counter }}
+              {% else %}
+                {{ forloop.counter }}
+              {% endif %}
             </span>
-        {% endif %}
-        <h3>{{ package.name }}</h3>
-        <div class="price">₹{{package.price }} / Plate</div>
 
-        <ul>
-            {% for feature in package.features.all %}
-                <li>✔ {{ feature.name }}</li>
-            {% endfor %}
-        </ul>
+            <!-- PACKAGE NAME -->
 
-        <a href="{% url 'package_detail' package.slug %}" class="package-btn">View Details</a>
+            <h2>{{ package.name }}</h2>
+
+            <!-- PRICE -->
+
+            <div class="package-price">
+              ₹{{ package.price }}
+
+              <span>/ Plate</span>
+            </div>
+
+            <!-- DESCRIPTION -->
+
+            {% if package.description %}
+              <p class="package-description">{{ package.description }}</p>
+            {% endif %}
+
+            <!--    =========================
+                     FEATURES
+                =========================    -->
+
+            <ul class="package-features">
+              {% for feature in package.features.all %}
+                <li>
+                  <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+
+                  <span>{{ feature.name }}</span>
+                </li>
+              {% endfor %}
+
+              {% for feature in package.bannar_features.all %}
+                <li>
+                  <span class="feature-check"><i class="fa-solid fa-check"></i></span>
+
+                  <span>{{ feature.name }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+
+            <!--    =========================
+                     BUTTON
+                =========================    -->
+
+            <a href="{% url 'package_detail' package.slug %}" class="package-btn">
+              <span>View Details</span>
+
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </article>
+      {% empty %}
+        <!--    =========================
+             NO PACKAGES
+        =========================    -->
+
+        <div class="no-packages">
+          <i class="fa-solid fa-utensils"></i>
+
+          <h3>No Catering Packages Available</h3>
+
+          <p>Please check again later.</p>
+        </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-</section>
-{% endblock content %}
+  </section>
+{% endblock %}

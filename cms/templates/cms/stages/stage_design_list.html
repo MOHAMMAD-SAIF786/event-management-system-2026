@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Stage Design Management
+  Stage Design Management - CMS
 {% endblock %}
 
 {% block extra_css %}
@@ -10,224 +10,271 @@
 {% endblock %}
 
 {% block content %}
-  <div class="page-header">
-    <div>
-      <h1>Stage Design Management</h1>
-      <p>Manage Hall Stage Designs</p>
-    </div>
-  </div>
-
-  {% for hall in halls %}
-    <div class="glass-card mb-4">
-      <!-- Hall Header with Add Category Button -->
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-        <h2>{{ hall.name }}</h2>
-        <button type="button" class="save-btn" onclick="openAddCategoryModal('{{ hall.id }}')"><i class="fa-solid fa-folder-plus"></i> Add Stage Category</button>
+  <div class="dashboard-container">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-masks-theater"></i> Stage Design Management</h1>
+        <p>Manage stage design categories, pricing, badges, and visual options per hall.</p>
       </div>
+    </div>
 
-      {% for category in hall.stage_categories.all %}
-        <div class="category-box" style="margin-top: 15px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3>
-              {{ category.name }}
-              <!-- Category Delete Button -->
-              <a href="{% url 'cms:stage_category_delete' category.id %}" style="color: #dc2626; margin-left: 10px; font-size: 0.85rem;" onclick="return confirm('Is category ke saare designs delete ho jayenge. Delete karein?')"><i class="fa-solid fa-trash"></i></a>
-            </h3>
+    <!-- Top Search Header -->
+    <div class="table-header">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search Stage Design..." />
+      </div>
+    </div>
 
-            <!-- Add Stage Design Button -->
-            <button type="button" class="save-btn" onclick="openAddStageModal('{{ category.id }}')"><i class="fa-solid fa-plus"></i> Add Stage Design</button>
+    <!-- HALLS LIST -->
+    {% for hall in halls %}
+      <div class="s-hall-card hall-stage-section">
+        <!-- Hall Header -->
+        <div class="s-hall-header">
+          <h2 class="s-hall-title">
+            <i class="fa-solid fa-hotel" style="color: var(--text-muted);"></i> {{ hall.name }}
+          </h2>
+          <button type="button" class="btn-expo-primary btn-sm" onclick="openAddCategoryModal('{{ hall.id }}')">
+            <i class="fa-solid fa-folder-plus"></i> Add Stage Category
+          </button>
+        </div>
+
+        <!-- CATEGORIES LIST -->
+        {% for category in hall.stage_categories.all %}
+          <div class="s-cat-box stage-category-box">
+            <div class="s-cat-header">
+              <h3 class="s-cat-title">
+                <i class="fa-solid fa-layer-group" style="color: var(--text-muted);"></i> {{ category.name }}
+                <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:stage_category_delete' category.id %}', '{{ category.name|escapejs }} Category')" style="color: #dc2626; margin-left: 6px; font-size: 13px;" title="Delete Category">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
+              </h3>
+
+              <button type="button" class="btn-expo-secondary btn-sm" onclick="openAddStageModal('{{ category.id }}', '{{ category.name|escapejs }}')">
+                <i class="fa-solid fa-plus"></i> Add Stage Design
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="s-table">
+                <thead>
+                  <tr>
+                    <th style="width: 90px;">Image</th>
+                    <th>Design Name</th>
+                    <th>Badge</th>
+                    <th>Price</th>
+                    <th style="width: 130px; text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in category.designs.all %}
+                    <tr class="stage-row">
+                      <td>
+                        {% if item.image %}
+                          <img src="{{ item.image.url }}" alt="{{ item.name }}" class="s-thumb" onclick="openFullImageModal('{{ item.image.url }}', '{{ item.name|escapejs }} Stage Design')" title="Click to view full image" />
+                        {% else %}
+                          <div style="width: 80px; height: 54px; background: #f4f4f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #a1a1aa; border: 1px solid #dcdee0;">
+                            <i class="fa-solid fa-image"></i>
+                          </div>
+                        {% endif %}
+                      </td>
+                      <td style="font-weight: 600; color: var(--text-main);" class="stage-name-cell">{{ item.name }}</td>
+                      <td>
+                        {% if item.badge %}
+                          <span class="badge-expo badge-success">{{ item.badge }}</span>
+                        {% else %}
+                          <span style="color: var(--text-muted); font-size: 12px;">None</span>
+                        {% endif %}
+                      </td>
+                      <td class="price-mono">₹ {{ item.price }}</td>
+                      <td>
+                        <div class="actions-cell">
+                          <button class="action-btn-edit" type="button" onclick="editStage('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.badge|escapejs }}', '{{ item.price }}')" title="Edit Stage">
+                            <i class="fa-solid fa-pen"></i> Edit
+                          </button>
+                          <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:stage_design_delete' item.id %}', '{{ item.name|escapejs }} Stage Design')" class="action-btn-delete" title="Delete Stage">
+                            <i class="fa-solid fa-trash"></i> Delete
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5" style="text-align: center; padding: 18px; color: var(--text-muted);">
+                        No stage designs in this category yet. Click "+ Add Stage Design" to add one.
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <!-- Baaki Table Code Exact Same Rahega -->
-
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th width="140">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in category.designs.all %}
-                <tr>
-                  <td>
-                    {% if item.image %}
-                      <img src="{{ item.image.url }}" width="60" height="45" style="object-fit: cover; border-radius: 6px;" />
-                    {% else %}
-                      <span>No Image</span>
-                    {% endif %}
-                  </td>
-                  <td>{{ item.name }}</td>
-                  <td>₹ {{ item.price }}</td>
-                  <td>
-                    <button class="edit-btn" type="button" onclick="editStage('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.price }}')"><i class="fa-solid fa-pen"></i></button>
-
-                    <a href="{% url 'cms:stage_design_delete' item.id %}" class="delete-btn" onclick="return confirm('Delete Stage Design?')"><i class="fa-solid fa-trash"></i></a>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="4">No Stage Design in this Category</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% empty %}
-        <p style="padding: 10px 0;">No Stage Categories Found for {{ hall.name }}</p>
-      {% endfor %}
-    </div>
-  {% endfor %}
-
-  <!-- EDIT STAGE DESIGN MODAL -->
-  <div id="editStageModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Edit Stage Design</h2>
-        <span class="close-btn" onclick="closeStageModal()">&times;</span>
+        {% empty %}
+          <p style="padding: 12px 0; color: var(--text-muted); font-size: 14px;">No stage categories created for {{ hall.name }} yet. Click "+ Add Stage Category" to start.</p>
+        {% endfor %}
       </div>
-
-      <form id="editStageForm" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-          <label>Design Name</label>
-          <input type="text" id="edit_stage_name" name="name" required />
-        </div>
-
-        <div class="form-group">
-          <label>Price</label>
-          <input type="number" step="0.01" id="edit_stage_price" name="price" required />
-        </div>
-
-        <div class="form-group">
-          <label>Change Image (Optional)</label>
-          <input type="file" name="image" accept="image/*" />
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeStageModal()">Cancel</button>
-          <button type="submit" class="save-btn">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <!-- ADD STAGE DESIGN MODAL -->
-  <div id="addStageModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add New Stage Design</h2>
-        <span class="close-btn" onclick="closeAddStageModal()">&times;</span>
+    {% empty %}
+      <div class="s-hall-card" style="text-align: center; padding: 48px; color: var(--text-muted);">
+        <i class="fa-solid fa-hotel" style="font-size: 32px; margin-bottom: 12px; color: var(--text-muted);"></i>
+        <p>No halls found. Please create a banquet hall first.</p>
       </div>
-
-      <form action="{% url 'cms:stage_design_add' %}" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" id="add_category_id" name="category_id" />
-
-        <div class="form-group">
-          <label>Design Name</label>
-          <input type="text" name="name" placeholder="Enter design name" required />
-        </div>
-
-        <div class="form-group">
-          <label>Price</label>
-          <input type="number" step="0.01" name="price" placeholder="0.00" required />
-        </div>
-
-        <div class="form-group">
-          <label>Stage Image</label>
-          <input type="file" name="image" accept="image/*" required />
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeAddStageModal()">Cancel</button>
-          <button type="submit" class="save-btn">Add Stage</button>
-        </div>
-      </form>
-    </div>
+    {% endfor %}
   </div>
+
   <!-- ADD CATEGORY MODAL -->
-  <div id="addCategoryModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
+  <div id="addCategoryModal" class="modal-overlay">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>Add New Stage Category</h2>
+        <h2><i class="fa-solid fa-folder-plus"></i> Add Stage Category</h2>
         <span class="close-btn" onclick="closeAddCategoryModal()">&times;</span>
       </div>
-
       <form action="{% url 'cms:stage_category_add' %}" method="POST">
         {% csrf_token %}
         <input type="hidden" id="category_hall_id" name="hall_id" />
 
         <div class="form-group">
-          <label>Category Name (e.g. Eklavya, Royal, Standard)</label>
-          <input type="text" name="name" placeholder="Enter category name" required />
+          <label>Category Name *</label>
+          <input type="text" name="name" placeholder="e.g. Royal Stage, Floral Wedding Stage, LED Stage" required class="form-control" />
         </div>
 
         <div class="form-group">
           <label>Description (Optional)</label>
-          <textarea name="description" rows="2" placeholder="Category detail..."></textarea>
+          <textarea name="description" rows="3" placeholder="Category details..." class="form-control"></textarea>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeAddCategoryModal()">Cancel</button>
-          <button type="submit" class="save-btn">Create Category</button>
+          <button type="button" class="btn-expo-secondary" onclick="closeAddCategoryModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-plus"></i> Create Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD STAGE DESIGN MODAL -->
+  <div id="addStageModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-plus"></i> Add Stage Design</h2>
+        <span class="close-btn" onclick="closeAddStageModal()">&times;</span>
+      </div>
+      <form action="{% url 'cms:stage_design_add' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" id="modal_stage_category_id" name="category_id" />
+
+        <div class="form-group">
+          <label>Design Name *</label>
+          <input type="text" name="name" placeholder="e.g. Imperial Floral Mandap" required class="form-control" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (₹) *</label>
+            <input type="number" step="0.01" name="price" placeholder="25000.00" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>Badge (Optional)</label>
+            <input type="text" name="badge" placeholder="e.g. Popular, Luxury, Premium" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Design Image</label>
+          <input type="file" name="image" accept="image/*" class="form-control" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-expo-secondary" onclick="closeAddStageModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-plus"></i> Add Design</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT STAGE DESIGN MODAL -->
+  <div id="editStageModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-pen"></i> Edit Stage Design</h2>
+        <span class="close-btn" onclick="closeEditStageModal()">&times;</span>
+      </div>
+      <form id="editStageForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Design Name *</label>
+          <input type="text" id="edit_stage_name" name="name" required class="form-control" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (₹) *</label>
+            <input type="number" step="0.01" id="edit_stage_price" name="price" required class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>Badge (Optional)</label>
+            <input type="text" id="edit_stage_badge" name="badge" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Update Design Image</label>
+          <input type="file" name="image" accept="image/*" class="form-control" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-expo-secondary" onclick="closeEditStageModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // ADD MODAL FUNCTIONS
-    function openAddStageModal(categoryId) {
-      document.getElementById('add_category_id').value = categoryId
-      document.getElementById('addStageModal').style.display = 'flex'
-    }
-    
-    function closeAddStageModal() {
-      document.getElementById('addStageModal').style.display = 'none'
-    }
-    
-    // Window outside click handler for both modals
-    window.onclick = function (e) {
-      let editModal = document.getElementById('editStageModal')
-      let addModal = document.getElementById('addStageModal')
-    
-      if (e.target === editModal) {
-        editModal.style.display = 'none'
-      }
-      if (e.target === addModal) {
-        addModal.style.display = 'none'
-      }
-    }
-    
-    function editStage(id, name, price) {
-      document.getElementById('editStageModal').style.display = 'flex'
-      document.getElementById('edit_stage_name').value = name
-      document.getElementById('edit_stage_price').value = price
-    
-      // Action URL set for views
-      document.getElementById('editStageForm').action = '/cms/stage-design/edit/' + id + '/'
-    }
-    
-    function closeStageModal() {
-      document.getElementById('editStageModal').style.display = 'none'
-    }
-    
-    window.onclick = function (e) {
-      let modal = document.getElementById('editStageModal')
-      if (e.target === modal) {
-        modal.style.display = 'none'
-      }
-    }
-    
     function openAddCategoryModal(hallId) {
-      document.getElementById('category_hall_id').value = hallId
-      document.getElementById('addCategoryModal').style.display = 'flex'
+      document.getElementById('category_hall_id').value = hallId;
+      document.getElementById('addCategoryModal').style.display = 'flex';
     }
-    
+
     function closeAddCategoryModal() {
-      document.getElementById('addCategoryModal').style.display = 'none'
+      document.getElementById('addCategoryModal').style.display = 'none';
     }
+
+    function openAddStageModal(categoryId, categoryName) {
+      document.getElementById('modal_stage_category_id').value = categoryId;
+      document.getElementById('addStageModal').style.display = 'flex';
+    }
+
+    function closeAddStageModal() {
+      document.getElementById('addStageModal').style.display = 'none';
+    }
+
+    function editStage(id, name, badge, price) {
+      document.getElementById('editStageForm').action = '/cms/stage-design/edit/' + id + '/';
+      document.getElementById('edit_stage_name').value = name;
+      document.getElementById('edit_stage_badge').value = badge;
+      document.getElementById('edit_stage_price').value = price;
+      document.getElementById('editStageModal').style.display = 'flex';
+    }
+
+    function closeEditStageModal() {
+      document.getElementById('editStageModal').style.display = 'none';
+    }
+
+    // Live search filter across stage designs
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+          const val = this.value.toLowerCase().trim();
+          const rows = document.querySelectorAll('.stage-row');
+          rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
+          });
+        });
+      }
+    });
   </script>
 {% endblock %}

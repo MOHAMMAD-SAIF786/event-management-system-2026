@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Hall,HallFeature,HallGallery,FurnitureCategory,FurnitureItem,StageCategory,StageDesign,ServiceCategory,Service
+from .models import Hall,HallFeature,HallGallery,FurnitureCategory,FurnitureItem,StageCategory,StageDesign,ServiceCategory,Service,HallPage
+
+@admin.register(HallPage)
+class HallPageAdmin(admin.ModelAdmin):
+    list_display = ('hero_title', 'hero_badge')
 # Register your models here.
 
 # ---------------- Hall ----------------

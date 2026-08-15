@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Contact Us | Royal Events
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/contact.css' %}" />
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="contact-hero">
+  <div class="contact-hero-content">
+    <span class="contact-badge">GET IN TOUCH</span>
+    <h1>Let's Create Your Unforgettable Event</h1>
+    <p>Have questions about halls, catering, or event packages? Reach out to our team today.</p>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section class="contact-section">
+  <div class="contact-container">
+    <!-- LEFT: CONTACT INFO CARDS -->
+    <div class="contact-info-column">
+      <div class="info-card-expo">
+        <div class="info-icon-wrapper">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div>
+          <h3>Office Address</h3>
+          <p>{{ contact.office_address|default:"Royal Palace Event Management, Bilaspur, Chhattisgarh" }}</p>
+        </div>
+      </div>
+
+      <div class="info-card-expo">
+        <div class="info-icon-wrapper">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <h3>Venue Address</h3>
+          <p>{{ contact.venue_address|default:"Near City Mall, Bilaspur (C.G.)" }}</p>
+        </div>
+      </div>
+
+      <div class="info-card-expo">
+        <div class="info-icon-wrapper">
+          <i class="fa-solid fa-phone"></i>
+        </div>
+        <div>
+          <h3>Call Us Direct</h3>
+          <p>{{ contact.phone_number|default:"+91 98765 43210" }}</p>
+          <small>Mon - Sun: 9:00 AM - 9:00 PM</small>
+        </div>
+      </div>
+
+      <div class="info-card-expo">
+        <div class="info-icon-wrapper">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+        <div>
+          <h3>Email Support</h3>
+          <p>{{ contact.email|default:"info@royalpalace.com" }}</p>
+        </div>
+      </div>
+
+      <!-- MAP BOX -->
+      <div class="map-box-expo">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14787.97341235!2d82.1384!3d22.0797!2m3!1f0!0!f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a280b15b5555555%3A0x123456789!2sBilaspur%2C%20Chhattisgarh!5e0!3m2!1sen!2sin!4v1700000000000" width="100%" height="200" style="border:0; border-radius:12px;" allowfullscreen="" loading="lazy"></iframe>
+      </div>
+    </div>
+
+    <!-- RIGHT: INQUIRY FORM -->
+    <div class="contact-form-column">
+      <div class="contact-form-card">
+        <h2>Send Us a Message</h2>
+        <p>Fill out the form below and our event planning consultant will get back to you shortly.</p>
+
+        {% if submitted %}
+          <div class="alert-success-expo">
+            <i class="fa-solid fa-circle-check"></i>
+            Thank you! Your inquiry has been sent successfully. Our team will contact you within 24 hours.
+          </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'contact' %}" class="contact-form">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fullName">Full Name *</label>
+              <input type="text" id="fullName" name="name" required placeholder="John Doe" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="phoneNum">Phone Number *</label>
+              <input type="tel" id="phoneNum" name="phone" required placeholder="+91 98765 43210" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="emailAddr">Email Address *</label>
+              <input type="email" id="emailAddr" name="email" required placeholder="john@example.com" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="eventType">Event Type</label>
+              <select id="eventType" name="event_type" class="form-input">
+                <option value="wedding">Wedding Reception</option>
+                <option value="birthday">Birthday Celebration</option>
+                <option value="corporate">Corporate Event</option>
+                <option value="anniversary">Anniversary</option>
+                <option value="other">Other Event</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventDate">Expected Event Date</label>
+              <input type="date" id="eventDate" name="event_date" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="guestCount">Estimated Guests</label>
+              <input type="number" id="guestCount" name="guest_count" placeholder="e.g. 500" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="messageText">Your Requirements & Questions</label>
+            <textarea id="messageText" name="message" rows="5" placeholder="Tell us more about your event needs..." class="form-input"></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit-contact">
+            <i class="fa-solid fa-paper-plane"></i> Send Inquiry
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

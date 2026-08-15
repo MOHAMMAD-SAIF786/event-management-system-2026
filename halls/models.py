@@ -197,6 +197,13 @@ class StageDesign(models.Model):
 
     name = models.CharField(max_length=100)
 
+    badge = models.CharField(
+        max_length=50,
+        blank=True,
+        default="New!",
+        help_text="Badge text to display on stage card (e.g. New!, Popular, Trending)"
+    )
+
     image = models.ImageField(
         upload_to="hall/stage/"
     )
@@ -237,8 +244,30 @@ class Service(models.Model):
         related_name="services"
     )
     name = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=14, decimal_places=2)
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
+
+
+class HallPage(models.Model):
+    hero_title = models.CharField(
+        max_length=200,
+        default="Our Premium Banquet Halls"
+    )
+    hero_subtitle = models.TextField(
+        default="Discover the perfect venue for your weddings, receptions, and corporate celebrations."
+    )
+    hero_badge = models.CharField(
+        max_length=100,
+        default="LUXURY VENUES"
+    )
+    hero_image = models.ImageField(
+        upload_to="hall_page/",
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return "Hall Page Settings"

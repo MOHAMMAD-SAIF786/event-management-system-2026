@@ -1,175 +1,136 @@
-/*==============================
-        FOOTER
-===============================*/
+/* ===========================================
+   EXPO DESIGN SYSTEM - FOOTER (DESIGN-expo.md)
+=========================================== */
 
-.footer{
-
-    background:#111;
-    color:#fff;
-    padding:80px 8% 25px;
-
+footer, .footer, .site-footer {
+    background: #171717;
+    color: #ffffff;
+    padding: 64px 32px 32px;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    border-top: 1px solid #262626;
 }
 
-.footer-container{
-
-    display:grid;
-    grid-template-columns:2fr 1fr 1.2fr 1.5fr;
-    gap:50px;
-
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr repeat(3, 1fr);
+    gap: 40px;
 }
 
-.footer-logo img{
-
-    width:110px;
-    margin-bottom:20px;
-
+.footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.footer-col h2{
-
-    color:#d4af37;
-    font-size:38px;
-    margin-bottom:15px;
-
+.footer-logo img {
+    height: 40px;
+    width: auto;
+    margin-bottom: 8px;
 }
 
-.footer-col h3{
-
-    font-size:28px;
-    margin-bottom:25px;
-
+.footer-col h2 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    margin: 0;
 }
 
-.footer-col h4{
-
-    margin-top:25px;
-    margin-bottom:15px;
-    color:#d4af37;
-
+.footer-col h3 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.88px;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 12px;
 }
 
-.footer-col p{
-
-    color:#bbb;
-    line-height:1.8;
-
+.footer-col p {
+    font-size: 14px;
+    color: #b0b4ba;
+    line-height: 1.6;
+    margin: 0;
 }
 
-.footer-col ul{
-
-    list-style:none;
-
+.footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.footer-col ul li{
-
-    margin-bottom:15px;
-
+.footer-col ul li {
+    margin-bottom: 10px;
 }
 
-.footer-col ul li a{
-
-    color:#bbb;
-    text-decoration:none;
-    transition:.3s;
-
+.footer-col ul li a {
+    color: #b0b4ba;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
 }
 
-.footer-col ul li a:hover{
-
-    color:#d4af37;
-    padding-left:8px;
-
+.footer-col ul li a:hover {
+    color: #0d74ce;
 }
 
-.footer-col i{
-
-    color:#d4af37;
-    margin-right:10px;
-
+.social-links {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
 }
 
-.social-links{
-
-    display:flex;
-    gap:12px;
-
+.social-links a {
+    width: 36px;
+    height: 36px;
+    background: #262626;
+    color: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background 0.2s ease;
 }
 
-.social-links a{
-
-    width:42px;
-    height:42px;
-    border:1px solid rgba(255,255,255,.15);
-    border-radius:50%;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    color:#fff;
-
-    transition:.3s;
-
+.social-links a:hover {
+    background: #000000;
+    color: #ffffff;
 }
 
-.social-links a:hover{
-
-    background:#d4af37;
-    color:#111;
-    border-color:#d4af37;
-
+.footer-bottom {
+    max-width: 1200px;
+    margin: 48px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid #262626;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #b0b4ba;
 }
 
-.footer-bottom{
-
-    margin-top:50px;
-    padding-top:20px;
-    border-top:1px solid rgba(255,255,255,.1);
-    text-align:center;
-    color:#999;
-
+@media (max-width: 991px) {
+    .footer-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
 }
 
-/*==============================
-        Responsive
-===============================*/
+@media (max-width: 576px) {
+    footer, .footer, .site-footer {
+        padding: 48px 20px 24px;
+    }
 
-@media(max-width:992px){
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
 
- .footer-container{
-
-   grid-template-columns:repeat(2,1fr);
-
- }
-
-}
-
- @media(max-width:768px){
-
- .footer{
-
-  padding:60px 25px 20px;
-
-}
-
-.footer-container{
-
-grid-template-columns:1fr;
-text-align:center;
-
-}
-
-.social-links{
-
-justify-content:center;
-
-}
-
-.footer-col h2{
-
-font-size:32px;
-
-}
-
+    .footer-bottom {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
 }

@@ -2,318 +2,209 @@
 {% load static %}
 
 {% block title %}
-  Booking Quotation
+  Booking Invoice #{{ booking.id }} | Royal Palace
 {% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/quotation.css' %}" />
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 {% endblock %}
 
 {% block content %}
-  <body>
-    <div class="invoice-page">
-      <!-- ================= HEADER ================= -->
-
-      <div class="invoice-header">
-        <div class="company-left">
-          <img src="{% static 'images/logo.png' %}" class="company-logo" />
-
-          <div class="company-info">
-            <h1>Royal Palace</h1>
-
-            <p>Premium Event Management System</p>
-
-            <small>Ranchi, Jharkhand</small>
-          </div>
-        </div>
-
-        <div class="company-right">
-          <h2>BOOKING INVOICE</h2>
-
-          <div class="invoice-number">
-            Invoice No :
-            <strong>RP-{{ booking.id|stringformat:'05d' }}</strong>
-          </div>
-
-          <div class="status {{ booking.status }}">{{ booking.status|title }}</div>
+<div class="invoice-page-container">
+  <div class="invoice-page">
+    <!-- ================= INVOICE HEADER ================= -->
+    <div class="invoice-header">
+      <div class="company-left">
+        <img src="{% static 'assets/logo1.png' %}" alt="Royal Palace Logo" class="company-logo" />
+        <div class="company-info">
+          <h1>Royal Palace</h1>
+          <p>Premium Event Management System</p>
+          <small><i class="fa-solid fa-location-dot"></i> Ranchi, Jharkhand</small>
         </div>
       </div>
 
-      <!-- ================= BOOKING INFO ================= -->
-
-      <div class="top-info">
-        <div class="info-box">
-          <span>Booking ID</span>
-
-          <strong>#{{ booking.id }}</strong>
+      <div class="company-right">
+        <h2>BOOKING INVOICE</h2>
+        <div class="invoice-number">
+          Invoice No: <strong>RP-{{ booking.id|stringformat:'05d' }}</strong>
         </div>
+        <div class="status {{ booking.status }}">{{ booking.status|title }}</div>
+      </div>
+    </div>
 
-        <div class="info-box">
-          <span>Booking Date</span>
-
-          <strong>{{ booking.booking_date|date:'d M Y' }}</strong>
-        </div>
-
-        <div class="info-box">
-          <span>Event Date</span>
-
-          <strong>{{ booking.event_date }}</strong>
-        </div>
-
-        <div class="info-box">
-          <span>Event Type</span>
-
-          <strong>{{ booking.event_type }}</strong>
-        </div>
+    <!-- ================= BOOKING TOP INFO ================= -->
+    <div class="top-info">
+      <div class="info-box">
+        <span>Booking ID</span>
+        <strong>#{{ booking.id }}</strong>
       </div>
 
-      <!-- ================= CUSTOMER DETAILS ================= -->
-
-      <div class="invoice-card">
-        <div class="card-title">
-          <i class="fa-solid fa-user"></i>
-
-          Customer Details
-        </div>
-
-        <div class="customer-grid">
-          <div class="customer-item">
-            <label>Customer Name</label>
-
-            <h4>{{ booking.customer.name }}</h4>
-          </div>
-
-          <div class="customer-item">
-            <label>Phone Number</label>
-
-            <h4>{{ booking.customer.phone }}</h4>
-          </div>
-
-          <div class="customer-item">
-            <label>Email Address</label>
-
-            <h4>{{ booking.customer.email }}</h4>
-          </div>
-
-          <div class="customer-item">
-            <label>Event Type</label>
-
-            <h4>{{ booking.event_type }}</h4>
-          </div>
-        </div>
+      <div class="info-box">
+        <span>Booking Date</span>
+        <strong>{{ booking.booking_date|date:'d M Y'|default:"Recent" }}</strong>
       </div>
 
-      <!-- ================= BOOKING DETAILS ================= -->
+      <div class="info-box">
+        <span>Event Date</span>
+        <strong>{{ booking.event_date|date:'d M Y'|default:booking.event_date }}</strong>
+      </div>
 
-      <div class="invoice-card">
-        <div class="card-title">
-          <i class="fa-solid fa-calendar-check"></i>
+      <div class="info-box">
+        <span>Event Type</span>
+        <strong>{{ booking.event_type|default:"General Event" }}</strong>
+      </div>
+    </div>
 
-          Booking Details
+    <!-- ================= CUSTOMER DETAILS ================= -->
+    <div class="invoice-card">
+      <div class="card-title">
+        <i class="fa-solid fa-user"></i> Customer Details
+      </div>
+
+      <div class="customer-grid">
+        <div class="customer-item">
+          <label>Customer Name</label>
+          <h4>{{ booking.customer.name|default:"Valued Customer" }}</h4>
         </div>
 
+        <div class="customer-item">
+          <label>Phone Number</label>
+          <h4>{{ booking.customer.phone|default:"Not Provided" }}</h4>
+        </div>
+
+        <div class="customer-item">
+          <label>Email Address</label>
+          <h4>{{ booking.customer.email|default:"Not Provided" }}</h4>
+        </div>
+
+        <div class="customer-item">
+          <label>Total Guests</label>
+          <h4>{{ booking.total_guest|default:0 }} Guests</h4>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= BOOKING DETAILS BREAKDOWN ================= -->
+    <div class="invoice-card">
+      <div class="card-title">
+        <i class="fa-solid fa-receipt"></i> Booking Details & Breakdown
+      </div>
+
+      <div style="overflow-x: auto;">
         <table class="invoice-table">
           <thead>
             <tr>
-              <th>Service</th>
-
-              <th>Details</th>
-
-              <th>Amount</th>
+              <th style="width: 25%;">Service Category</th>
+              <th>Details / Items</th>
+              <th style="width: 25%; text-align: right;">Amount</th>
             </tr>
           </thead>
-
           <tbody>
-            {% if booking.hall_booking %}
+            <!-- Hall -->
+            {% if booking.hall %}
               <tr>
-                <td>Hall</td>
-
-                <td>{{ booking.hall_booking.hall.name }}</td>
-
-                <td>₹{{ booking.hall_booking.price }}</td>
+                <td><strong>Hall Venue</strong></td>
+                <td>{{ booking.hall.name }}</td>
+                <td>₹{{ booking.hall.price }}</td>
               </tr>
             {% endif %}
 
             <!-- Rooms -->
-
             {% for room in booking.rooms.all %}
               <tr>
-                <td>Room</td>
-
-                <td>{{ room.room.name }}
-
-                  ×
-
-                  {{ room.quantity }}</td>
-
+                <td><strong>Room Booking</strong></td>
+                <td>{{ room.room.name }} <span style="color: var(--inv-body);">({{ room.quantity }} Rooms)</span></td>
                 <td>₹{{ room.subtotal }}</td>
               </tr>
             {% endfor %}
 
             <!-- Furniture -->
-
             {% for item in booking.furniture.all %}
               <tr>
-                <td>Furniture</td>
-
-                <td>{{ item.furniture.name }}
-
-                  ×
-
-                  {{ item.quantity }}</td>
-
+                <td><strong>Furniture & Seating</strong></td>
+                <td>{{ item.furniture.name }} <span style="color: var(--inv-body);">(Qty: {{ item.quantity }})</span></td>
                 <td>₹{{ item.subtotal }}</td>
               </tr>
             {% endfor %}
 
             <!-- Stage -->
-
             {% if booking.stage %}
               <tr>
-                <td>Stage</td>
-
+                <td><strong>Stage Decoration</strong></td>
                 <td>{{ booking.stage.stage.name }}</td>
-
                 <td>₹{{ booking.stage.price }}</td>
               </tr>
             {% endif %}
 
             <!-- Services -->
-
             {% for service in booking.services.all %}
               <tr>
-                <td>Service</td>
-
+                <td><strong>Additional Service</strong></td>
                 <td>{{ service.service.name }}</td>
-
                 <td>₹{{ service.price }}</td>
               </tr>
             {% endfor %}
 
             <!-- Catering -->
-
             {% if booking.catering %}
               <tr>
-                <td>Catering</td>
-
+                <td><strong>Catering Package</strong></td>
                 <td>
                   {{ booking.catering.package.name }}
-
                   <br />
-
-                  <small>
-                    {{ booking.catering.guest_count }}
-
-                    Guests
-
-                    ×
-
-                    ₹{{ booking.catering.price_per_plate }}
+                  <small style="color: var(--inv-body);">
+                    {{ booking.catering.guest_count }} Guests × ₹{{ booking.catering.price_per_plate }}/plate
                   </small>
                 </td>
-
                 <td>₹{{ booking.catering.total_price }}</td>
               </tr>
             {% endif %}
           </tbody>
         </table>
       </div>
+    </div>
 
-      <!-- ================= PAYMENT ================= -->
-
-      <div class="invoice-card payment-card">
-        <div class="card-title">
-          <i class="fa-solid fa-wallet"></i>
-
-          Payment Summary
+    <!-- ================= PAYMENT SUMMARY ================= -->
+    <div class="payment-card">
+      <div class="payment-summary">
+        <div class="summary-row">
+          <span>Total Amount</span>
+          <strong>₹{{ booking.total_amount }}</strong>
         </div>
-
-        <div class="payment-summary">
-          <div class="summary-row">
-            <span>Total Amount</span>
-
-            <strong>₹{{ booking.total_amount }}</strong>
-          </div>
-
-          <div class="summary-note">This quotation includes all selected services and applicable charges.</div>
-        </div>
-      </div>
-
-      <!-- ================= FOOTER ================= -->
-
-      <div class="invoice-footer">
-        <div class="signature-box">
-          <div class="line"></div>
-
-          <p>Customer Signature</p>
-        </div>
-
-        <div class="signature-box">
-          <div class="line"></div>
-
-          <p>Authorized Signature</p>
-        </div>
-      </div>
-
-      <!-- ================= BUTTONS ================= -->
-
-      <div class="invoice-buttons">
-        <button id="printInvoice">
-          <i class="fa-solid fa-print"></i>
-
-          Print Invoice
-        </button>
-
-        <button id="downloadPDF">
-          <i class="fa-solid fa-download"></i>
-
-          Download PDF
-        </button>
-
-        <a href="/">
-          <button>
-            <i class="fa-solid fa-house"></i>
-
-            Home
-          </button>
-        </a>
+        <div class="summary-note">This invoice includes all selected venues, catering, furnishings, and applicable taxes.</div>
       </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="{% static 'js/invoice.js' %}"></script>
-  </body>
-{% endblock %}
 
-{% block extra_js %}
-  <script>
-    document.getElementById('downloadPdf').addEventListener('click', function () {
-      const element = document.querySelector('.quotation-wrapper')
-    
-      html2pdf()
-        .set({
-          margin: 8,
-    
-          filename: 'Booking-{{ booking.id }}.pdf',
-    
-          image: {
-            type: 'jpeg',
-            quality: 1
-          },
-    
-          html2canvas: {
-            scale: 2
-          },
-    
-          jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-          }
-        })
-        .from(element)
-        .save()
-    })
-  </script>
+    <!-- ================= SIGNATURES ================= -->
+    <div class="invoice-footer">
+      <div class="signature-box">
+        <div class="line"></div>
+        <p>Customer Signature</p>
+      </div>
+
+      <div class="signature-box">
+        <div class="line"></div>
+        <p>Authorized Signature</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ACTION BUTTONS ================= -->
+  <div class="invoice-buttons-wrap">
+    <button type="button" id="printInvoice" class="btn-inv secondary">
+      <i class="fa-solid fa-print"></i> Print Invoice
+    </button>
+
+    <button type="button" id="downloadPDF" class="btn-inv primary">
+      <i class="fa-solid fa-download"></i> Download PDF
+    </button>
+
+    <a href="/" class="btn-inv secondary">
+      <i class="fa-solid fa-house"></i> Home
+    </a>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="{% static 'js/invoice.js' %}"></script>
 {% endblock %}

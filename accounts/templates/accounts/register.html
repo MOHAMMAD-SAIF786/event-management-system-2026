@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Account | Royal Events{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user_auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <h1>Create Account</h1>
+            <p>Join Royal Events to manage bookings & quotes</p>
+        </div>
+
+        <form method="POST" action="{% url 'accounts:register' %}" class="auth-form">
+            {% csrf_token %}
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+
+            <div class="auth-form-group">
+                <label for="name">Full Name *</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="name" name="name" placeholder="John Doe" required autofocus>
+                </div>
+            </div>
+
+            <div class="auth-form-group">
+                <label for="username">Username *</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-at"></i>
+                    <input type="text" id="username" name="username" placeholder="johndoe" required>
+                </div>
+            </div>
+
+            <div class="auth-form-group">
+                <label for="email">Email Address</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" name="email" placeholder="john@example.com">
+                </div>
+            </div>
+
+            <div class="auth-form-group">
+                <label for="phone">Phone Number</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="tel" id="phone" name="phone" placeholder="+1 234 567 890">
+                </div>
+            </div>
+
+            <div class="auth-form-group">
+                <label for="password">Password *</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Minimum 6 characters" required>
+                </div>
+            </div>
+
+            <div class="auth-form-group">
+                <label for="confirm_password">Confirm Password *</label>
+                <div class="auth-input-wrapper">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-btn-primary" style="margin-top: 8px;">
+                <i class="fa-solid fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer-text">
+            Already have an account? <a href="{% url 'accounts:user_login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Sign in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

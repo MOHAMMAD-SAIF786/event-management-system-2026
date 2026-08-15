@@ -3,54 +3,85 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Royal CMS Login</title>
-
+    <title>Admin Login - Royal CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'cms/css/login.css' %}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
   </head>
 
   <body>
     <div class="login-page">
-      <!-- Background Overlay -->
-      <div class="overlay"></div>
-
-      <!-- Floating Shapes -->
-      <span class="shape one"></span>
-      <span class="shape two"></span>
-      <span class="shape three"></span>
+      <div class="sky-gradient-bg"></div>
 
       <div class="login-card">
+        <!-- LEFT PANEL: EXPO DARK BRAND SURFACE -->
         <div class="login-left">
-          <h1>Royal CMS</h1>
+          <div>
+            <div class="brand-badge">
+              <i class="fa-solid fa-crown"></i> Royal CMS
+            </div>
+            <h1>Event Management Infrastructure</h1>
+            <p>Empowering venue managers with high-performance hall scheduling, catering, and booking automation.</p>
+          </div>
 
-          <p>Professional Event Management Dashboard</p>
-
-          <img src="{% static 'cms/images/dashboard.svg' %}" alt="Dashboard Illustration" />
+          <div class="code-preview-box">
+            <div class="code-preview-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="code-title">cms.config.json</span>
+            </div>
+            <pre><code><span class="token-keyword">const</span> cms = <span class="token-function">defineConfig</span>({
+  <span class="token-key">mode</span>: <span class="token-string">'production'</span>,
+  <span class="token-key">security</span>: <span class="token-string">'strict'</span>
+});</code></pre>
+          </div>
         </div>
 
+        <!-- RIGHT PANEL: EXPO FORM SURFACE -->
         <div class="login-right">
-          <h2>Admin Login</h2>
+          <div class="form-header">
+            <h2>Admin Login</h2>
+            <p>Sign in to access your management dashboard</p>
+          </div>
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert-message {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          {% endif %}
 
           <form method="post">
             {% csrf_token %}
 
             <div class="input-box">
               <i class="fa-solid fa-user"></i>
-
-              <input type="text" name="username" placeholder="Username" required />
+              <input type="text" name="username" placeholder="Username" required autocomplete="username" autofocus />
             </div>
 
             <div class="input-box">
               <i class="fa-solid fa-lock"></i>
-
-              <input type="password" name="password" placeholder="Password" required />
+              <input type="password" name="password" placeholder="Password" required autocomplete="current-password" />
             </div>
 
-            <button type="submit">Login</button>
+            <button type="submit" class="btn-expo-primary">Sign In</button>
           </form>
+
+          <div class="form-footer">
+            <p>
+              Don't have an account?
+              <a href="{% url 'cms:register' %}" class="link-expo">Register here</a>
+            </p>
+            <a href="{% url 'halls_list' %}" class="link-back-site">
+              <i class="fa-solid fa-arrow-left"></i> Back to Public Site
+            </a>
+          </div>
         </div>
       </div>
     </div>

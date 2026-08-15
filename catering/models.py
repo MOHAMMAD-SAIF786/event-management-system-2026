@@ -88,6 +88,9 @@ class MenuSection(models.Model):
         default=0
     )
 
+    class Meta:
+        ordering = ['order', 'id']
+
     def __str__(self):
         return f"{self.package.name} - {self.title}"
     
@@ -108,6 +111,10 @@ class MenuCategory(models.Model):
         default=0
     )
 
+    class Meta:
+        ordering = ['id']
+
+
     def __str__(self):
         return self.title
     
@@ -127,8 +134,12 @@ class MenuItem(models.Model):
         default=True
     )
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return self.name
+
     
 class GuestPricing(models.Model):
 
@@ -166,3 +177,24 @@ class BannarFeature(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CateringPage(models.Model):
+
+    hero_title = models.CharField(
+        max_length=200,
+        default="Catering Packages"
+    )
+
+    hero_subtitle = models.TextField(
+        default="Select the perfect menu for your event"
+    )
+
+    hero_image = models.ImageField(
+        upload_to='catering_page/',
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return "Catering Page Settings"

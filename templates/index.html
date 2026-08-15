@@ -9,16 +9,16 @@
   <!-- Hero section -->
 
   <section class="hero" style="background:
-        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-        url('{{ homepage.hero_image.url }}');">
+        linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.72)),
+        url('{% if homepage.hero_image %}{{ homepage.hero_image.url }}{% endif %}') center/cover no-repeat;">
     <div class="hero-content">
       <h1>{{ homepage.hero_title }}</h1>
 
       <p>{{ homepage.hero_description }}</p>
 
       <div class="hero-buttons">
-        <a href="{% url 'create_booking' %}" class="btn btn-primary">Book Event</a>
-        <a href="#halls" class="btn btn-secondary">Explore Halls</a>
+        <a href="{% url 'halls_list' %}" class="btn btn-primary"><i class="fa-solid fa-calendar-check"></i> Reserve Your Venue</a>
+        <a href="{% url 'halls_list' %}" class="btn btn-secondary"><i class="fa-solid fa-building-columns"></i> Explore Halls</a>
       </div>
     </div>
   </section>
@@ -34,14 +34,23 @@
     <div class="hall-container">
       {% for hall in halls %}
         <div class="hall-card">
-          <img src="{{ hall.image.url }}" alt="{{ hall.name }}" />
+          {% if hall.image %}
+            <img src="{{ hall.image.url }}" alt="{{ hall.name }}" />
+          {% else %}
+            <div style="width:100%; height:220px; background:#fafafa; display:flex; align-items:center; justify-content:center; color:#999;">
+              <i class="fa-solid fa-building-columns" style="font-size: 48px;"></i>
+            </div>
+          {% endif %}
           <div class="hall-info">
             <h3>{{ hall.name }}</h3>
             <p>{{ hall.description }}</p>
             <p>Capacity : {{ hall.capacity }} Guests</p>
             <p>Location : {{ hall.location }}</p>
             <div class="price">₹{{ hall.price }}</div>
-            <a href="{% url 'hall_detail' hall.slug %}">View Details</a>
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+              <a href="javascript:void(0)" onclick="addHallToCart('{{ hall.id }}', '{{ hall.name|escapejs }}', '{{ hall.price }}', '{{ hall.capacity }}')" class="btn btn-primary" style="flex: 1; text-align: center;"><i class="fa-solid fa-cart-plus"></i> Select Hall</a>
+              <a href="{% url 'hall_detail' hall.slug %}" class="btn btn-secondary"><i class="fa-solid fa-circle-info"></i></a>
+            </div>
           </div>
         </div>
       {% endfor %}
@@ -52,15 +61,20 @@
 
   <section id="rooms">
     <div class="section-title">
-      <h2>Groom and bride Rooms & lexury Rooms</h2>
+      <h2>Groom and bride Rooms & luxury Rooms</h2>
       <p>Luxury accommodation for bride, groom and guests</p>
     </div>
 
     <div class="hall-container">
-      <!-- BRIDAL ROOM -->
       {% for room in rooms %}
         <div class="hall-card">
-          <img src="{{ room.image.url }}" alt="{{ room.name }}" />
+          {% if room.image %}
+            <img src="{{ room.image.url }}" alt="{{ room.name }}" />
+          {% else %}
+            <div style="width:100%; height:220px; background:#fafafa; display:flex; align-items:center; justify-content:center; color:#999;">
+              <i class="fa-solid fa-bed" style="font-size: 48px;"></i>
+            </div>
+          {% endif %}
 
           <div class="hall-info">
             <h3>{{ room.name }}</h3>
@@ -75,6 +89,7 @@
             </p>
 
             <div class="price">₹{{ room.price }} / Night</div>
+            <a href="javascript:void(0)" onclick="addRoomToCart('{{ room.id }}', '{{ room.name|escapejs }}', '{{ room.price }}')" class="menu-btn" style="margin-top: 16px;"><i class="fa-solid fa-cart-plus"></i> Add Room to Cart</a>
           </div>
         </div>
       {% endfor %}
@@ -90,51 +105,34 @@
     </div>
 
     <div class="menu-container">
-
      {% for package in packages %}
-
       <div class="menu-card">
-
         <div class="menu-image">
-
           {% if package.image %}
             <img src="{{ package.image.url }}" alt="{{ package.name }}">
           {% endif %}
-
           {% if package.badge %}
             <span class="badge">{{ package.badge }}</span>
           {% endif %}
-
         </div>
 
         <div class="menu-content">
-
           <h3>{{ package.name }}</h3>
-
           <p>{{ package.description|truncatewords:15 }}</p>
-
           <ul>
-
             {% for feature in package.features.all|slice:":4" %}
               <li>{{ feature.name }}</li>
             {% endfor %}
-
           </ul>
 
           <div class="price">
             ₹{{ package.price }} <span>/ Plate</span>
           </div>
 
-          <a href="{% url 'catering' %}" class="menu-btn">
-            View Details
-          </a>
-
+          <a href="javascript:void(0)" onclick="addCateringToCart('{{ package.id }}', '{{ package.name|escapejs }}', '{{ package.price }}')" class="menu-btn"><i class="fa-solid fa-cart-plus"></i> Add Package to Cart</a>
         </div>
-
       </div>
-
      {% endfor %}
-
     </div>
 </section>
 

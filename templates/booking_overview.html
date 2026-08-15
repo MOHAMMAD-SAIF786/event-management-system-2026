@@ -209,80 +209,68 @@ Booking Overview
       <!-- RIGHT -->
 
       <div class="booking-right">
-        <div class="summary-card">
-          <h2>
-            <i class="fa-solid fa-receipt"></i>
-
-            Booking Summary
-          </h2>
+        <div class="overview-summary-card">
+          <div class="overview-summary-header">
+            <h2><i class="fa-solid fa-receipt"></i> Booking Summary</h2>
+            <p>Complete breakdown of selected services</p>
+          </div>
 
           <div class="summary-list">
             <!-- hall  -->
             <div class="summary-item">
-              <span>Hall</span>
-
+              <span><i class="fa-solid fa-building-columns"></i> Hall Booking</span>
               <strong id="summaryHallPrice">₹0</strong>
             </div>
 
             <!-- Rooms  -->
             <div class="summary-item">
-              <span>Room</span>
-
+              <span><i class="fa-solid fa-bed"></i> Room Stay</span>
               <strong id="summaryRoomPrice">₹0</strong>
             </div>
 
             <!-- catering  -->
             <div class="summary-item">
-              <span>Catering</span>
+              <span><i class="fa-solid fa-utensils"></i> Catering Package</span>
               <strong id="summaryCateringPrice">₹0</strong>
             </div>
 
             <!-- furniture  -->
             <div class="summary-item">
-              <span>Furniture</span>
-
+              <span><i class="fa-solid fa-chair"></i> Furniture & Seating</span>
               <strong id="summaryFurniturePrice">₹0</strong>
             </div>
 
             <!-- stage -->
             <div class="summary-item">
-              <span>Stage</span>
-
+              <span><i class="fa-solid fa-masks-theater"></i> Stage Decoration</span>
               <strong id="summaryStagePrice">₹0</strong>
             </div>
 
             <!-- services  -->
             <div class="summary-item">
-              <span>Services</span>
-
+              <span><i class="fa-solid fa-wand-magic-sparkles"></i> Additional Services</span>
               <strong id="summaryServicePrice">₹0</strong>
             </div>
           </div>
 
-          <div class="grand-total">
+          <div class="overview-grand-total">
             <span>Grand Total</span>
-
             <h1 id="grandTotal">₹0</h1>
           </div>
 
           <div class="summary-buttons">
             <button type="button" class="modify-btn" onclick="modifyBooking()">
-              <i class="fa-solid fa-pen"></i>
-              Modify Booking
+              <i class="fa-solid fa-pen-to-square"></i>
+              Modify Selections
             </button>
 
             <button type="button" class="confirm-btn" onclick="confirmBooking()">
               <i class="fa-solid fa-circle-check"></i>
-              Confirm Booking
+              Confirm & Submit Booking
             </button>
           </div>
         </div>
       </div>
-      <h2>{{ booking.customer_name }}</h2>
-
-      <p>{{ booking.customer_phone }}</p>
-
-      <p>{{ booking.total_amount }}</p>
     </div>
   </div>
 </section>

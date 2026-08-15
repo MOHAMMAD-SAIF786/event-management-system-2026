@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Booking Details
+  Booking #BK-{{ booking.id }} - Details
 {% endblock %}
 
 {% block extra_css %}
@@ -10,726 +10,349 @@
 {% endblock %}
 
 {% block content %}
-  <div class="booking-page">
-    <!-- ========================================= -->
-    <!-- HERO SECTION -->
-    <!-- ========================================= -->
+  <div class="dashboard-container">
+    <!-- PAGE HEADER ACTIONS -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <a href="{% url 'cms:booking_list' %}" class="btn-expo-secondary" style="margin-bottom: 10px;">
+          <i class="fa-solid fa-arrow-left"></i> Back to Bookings
+        </a>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: var(--expo-text-main);"><i class="fa-solid fa-file-invoice"></i> Booking #BK-{{ booking.id }}</h1>
+        <p style="margin: 3px 0 0 0; color: var(--expo-text-muted); font-size: 13px;">Full reservation specifications and cost breakdown.</p>
+      </div>
 
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{% url 'quotation' booking.id %}" target="_blank" class="btn-expo-primary">
+          <i class="fa-solid fa-file-invoice"></i> View / Print Invoice
+        </a>
+        <a href="{% url 'cms:booking_edit' booking.id %}" class="btn-expo-secondary">
+          <i class="fa-solid fa-pen"></i> Edit Booking
+        </a>
+        <button type="button" class="btn-expo-danger" onclick="confirmExpoDelete('{% url 'cms:booking_delete' booking.id %}', 'Booking #BK-{{ booking.id }}')">
+          <i class="fa-solid fa-ban"></i> Cancel Booking
+        </button>
+      </div>
+    </div>
+
+    <!-- HERO SECTION -->
     <section class="booking-hero">
       <div class="hero-left">
         <div class="customer-avatar">
-          <img src="https://ui-avatars.com/api/?name={{ booking.customer_name }}&background=2563eb&color=fff&size=200" />
+          {{ booking.customer.name|first|upper }}
         </div>
 
         <div class="hero-info">
-          <div class="booking-id">Booking #BK-{{ booking.id }}</div>
-
-          <h1>{{ booking.customer_name }}</h1>
-
-          <p>{{ booking.event_type }}</p>
+          <span class="booking-id-tag">#BK-{{ booking.id }}</span>
+          <h1>{{ booking.customer.name }}</h1>
+          <p>{{ booking.event_type }} Reservation</p>
 
           <div class="hero-meta">
-            <span>
-              <i class="fa-solid fa-calendar-days"></i>
-
-              {{ booking.event_date }}
-            </span>
-
-            <span>
-              <i class="fa-solid fa-users"></i>
-
-              350 Guests
-            </span>
-
-            <span>
-              <i class="fa-solid fa-location-dot"></i>
-
-              Royal Palace
-            </span>
+            <span><i class="fa-solid fa-calendar-days"></i> {{ booking.event_date|date:"M d, Y" }}</span>
+            <span><i class="fa-solid fa-users"></i> {{ booking.total_guest|default:"350" }} Guests</span>
+            <span><i class="fa-solid fa-location-dot"></i> {{ booking.hall_booking.hall.name|default:"Royal Palace" }}</span>
           </div>
         </div>
       </div>
 
       <div class="hero-right">
-        <div class="booking-status {{ booking.status }}">{{ booking.status }}</div>
+        {% if booking.status|lower == 'confirmed' %}
+          <span class="badge-expo badge-success" style="font-size: 12px; padding: 5px 12px;">Confirmed</span>
+        {% elif booking.status|lower == 'pending' %}
+          <span class="badge-expo badge-warning" style="font-size: 12px; padding: 5px 12px;">Pending</span>
+        {% elif booking.status|lower == 'cancelled' %}
+          <span class="badge-expo badge-danger" style="font-size: 12px; padding: 5px 12px;">Cancelled</span>
+        {% else %}
+          <span class="badge-expo" style="font-size: 12px; padding: 5px 12px;">{{ booking.status|title }}</span>
+        {% endif %}
 
-        <div class="booking-total">
+        <div class="booking-total-box">
           <small>Total Amount</small>
-
-          <h2>₹ {{ booking.total_amount }}</h2>
+          <h2>₹ {{ booking.total_amount|floatformat:2 }}</h2>
         </div>
       </div>
     </section>
 
-    <!-- ========================================= -->
-    <!-- QUICK SUMMARY -->
-    <!-- ========================================= -->
-
+    <!-- QUICK SUMMARY METRICS -->
     <section class="summary-section">
       <div class="summary-card">
-        <div class="icon blue">
-          <i class="fa-solid fa-building"></i>
-        </div>
-
+        <div class="summary-icon"><i class="fa-solid fa-building"></i></div>
         <div>
-          <span>Hall</span>
-
-          <h3>Royal Palace</h3>
+          <span>Selected Hall</span>
+          <h3>{{ booking.hall_booking.hall.name|default:"Royal Palace" }}</h3>
         </div>
       </div>
 
       <div class="summary-card">
-        <div class="icon green">
-          <i class="fa-solid fa-users"></i>
-        </div>
-
+        <div class="summary-icon"><i class="fa-solid fa-users"></i></div>
         <div>
-          <span>Guests</span>
-
-          <h3>350</h3>
+          <span>Total Guests</span>
+          <h3>{{ booking.total_guest|default:"350" }}</h3>
         </div>
       </div>
 
       <div class="summary-card">
-        <div class="icon orange">
-          <i class="fa-solid fa-wallet"></i>
-        </div>
-
+        <div class="summary-icon"><i class="fa-solid fa-wallet"></i></div>
         <div>
-          <span>Paid</span>
-
-          <h3>₹100000</h3>
+          <span>Paid Deposit</span>
+          <h3 class="price-mono">₹ {{ paid_amount|floatformat:2 }}</h3>
         </div>
       </div>
 
       <div class="summary-card">
-        <div class="icon red">
-          <i class="fa-solid fa-hourglass-half"></i>
-        </div>
-
+        <div class="summary-icon"><i class="fa-solid fa-hourglass-half"></i></div>
         <div>
-          <span>Remaining</span>
-
-          <h3>₹211290</h3>
+          <span>Remaining Balance</span>
+          <h3 class="price-mono">₹ {{ remaining_amount|floatformat:2 }}</h3>
         </div>
       </div>
     </section>
 
-    <!-- ========================================= -->
-    <!-- MAIN CONTENT START -->
-    <!-- ========================================= -->
-
-    <div class="booking-layout">
+    <!-- MAIN CONTENT GRID -->
+    <div class="booking-grid">
       <!-- LEFT PANEL -->
-
-      <div class="booking-main">
-        <!-- ================================================= -->
+      <div class="booking-left">
         <!-- CUSTOMER INFORMATION -->
-        <!-- ================================================= -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon blue">
-                <i class="fa-solid fa-user"></i>
-              </div>
-
-              <div>
-                <h2>Customer Information</h2>
-
-                <p>Primary customer details</p>
-              </div>
-            </div>
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-user"></i> Customer Information
           </div>
-
-          <div class="card-body">
-            <div class="info-grid">
-              <div class="info-box">
-                <label>Full Name</label>
-
-                <span>{{ booking.customer.name }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Phone Number</label>
-
-                <span>{{ booking.customer.phone }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Email Address</label>
-
-                <span>{{ booking.customer.email| default:"Not Provided" }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Address</label>
-
-                <span>{{ booking.customer.address|default:"Not Provided" }}</span>
-              </div>
+          <div class="info-grid">
+            <div class="info-box">
+              <label>Full Name</label>
+              <span>{{ booking.customer.name }}</span>
+            </div>
+            <div class="info-box">
+              <label>Phone Number</label>
+              <span>{{ booking.customer.phone }}</span>
+            </div>
+            <div class="info-box">
+              <label>Email Address</label>
+              <span>{{ booking.customer.email|default:"Not Provided" }}</span>
+            </div>
+            <div class="info-box">
+              <label>Address</label>
+              <span>{{ booking.customer.address|default:"Not Provided" }}</span>
             </div>
           </div>
         </div>
 
-        <!-- ================================================= -->
         <!-- EVENT INFORMATION -->
-        <!-- ================================================= -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon orange">
-                <i class="fa-solid fa-calendar-days"></i>
-              </div>
-
-              <div>
-                <h2>Event Information</h2>
-
-                <p>Booked event details</p>
-              </div>
-            </div>
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-calendar-days"></i> Event Information
           </div>
-
-          <div class="card-body">
-            <div class="info-grid">
-              <div class="info-box">
-                <label>Event Type</label>
-
-                <span>{{ booking.event_type }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Event Date</label>
-
-                <span>{{ booking.event_date }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Booking Date</label>
-
-                <span>{{ booking.booking_date }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Time Slot</label>
-
-                <span>{{ booking.event_time }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Total Guests</label>
-
-                <span>{{ booking.total_guest }}</span>
-              </div>
-
-              <div class="info-box">
-                <label>Booking Status</label>
-
-                <span class="status-pill {{ booking.status }}">{{ booking.status }}</span>
-              </div>
+          <div class="info-grid">
+            <div class="info-box">
+              <label>Event Type</label>
+              <span>{{ booking.event_type }}</span>
+            </div>
+            <div class="info-box">
+              <label>Event Date</label>
+              <span>{{ booking.event_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="info-box">
+              <label>Booking Date</label>
+              <span>{{ booking.booking_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="info-box">
+              <label>Time Slot</label>
+              <span>{{ booking.event_time|default:"Full Day" }}</span>
+            </div>
+            <div class="info-box">
+              <label>Total Guests</label>
+              <span>{{ booking.total_guest|default:"350" }}</span>
+            </div>
+            <div class="info-box">
+              <label>Booking Status</label>
+              <span>{{ booking.status|title }}</span>
             </div>
           </div>
         </div>
 
-        <!-- ================================================= -->
-        <!-- HALL DETAILS -->
-        <!-- ================================================= -->
-
-        {% if booking.hall %}
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon purple">
-                  <i class="fa-solid fa-building"></i>
-                </div>
-
-                <div>
-                  <h2>Hall Details</h2>
-
-                  <p>Selected hall information</p>
-                </div>
-              </div>
+        <!-- ROOM SELECTION -->
+        {% if booking.rooms.all %}
+          <div class="expo-card">
+            <div class="section-title">
+              <i class="fa-solid fa-bed"></i> Room Selection
             </div>
-
-            <div class="hall-card">
-              <div class="hall-image">
-                {% if booking.hall.image %}
-                  <img src="{{ booking.hall.image.url }}" alt="Hall" />
-                {% else %}
-                  <img src="{% static 'cms/images/default_hall.jpg' %}" alt="Hall" />
-                {% endif %}
-              </div>
-
-              <div class="hall-content">
-                <h2>{{ booking.hall.name }}</h2>
-
-                <p>{{ booking.hall.description }}</p>
-
-                <div class="hall-features">
-                  <span>
-                    <i class="fa-solid fa-users"></i>
-
-                    {{ booking.hall.capacity }} Guests
-                  </span>
-
-                  <span>
-                    <i class="fa-solid fa-car"></i>
-
-                    Parking
-                  </span>
-
-                  <span>
-                    <i class="fa-solid fa-snowflake"></i>
-
-                    AC Hall
-                  </span>
-
-                  <span>
-                    <i class="fa-solid fa-wifi"></i>
-
-                    WiFi
-                  </span>
+            <div class="item-card-grid">
+              {% for b_room in booking.rooms.all %}
+                <div class="item-card">
+                  <h4>{{ b_room.room.name }}</h4>
+                  <p>Quantity: {{ b_room.quantity }}</p>
+                  <div class="price">₹ {{ b_room.subtotal|default:b_room.price }}</div>
                 </div>
-
-                <div class="hall-price">₹ {{ booking.hall.price }}</div>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- ================================================= -->
-        <!-- ROOM DETAILS -->
-        <!-- ================================================= -->
-        {% if booking.rooms %}
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon brown">
-                  <i class="fa-solid fa-couch"></i>
-                </div>
-
-                <div>
-                  <h2>Room Selection</h2>
-
-                  <p>Room booked by customer</p>
-                </div>
-              </div>
-            </div>
-            <div class="room-grid">
-              {% for room in booking.rooms.all %}
-                <div class="room-card">
-                  <div class="room-icon">
-                    <i class="fa-solid fa-bed"></i>
-                  </div>
-
-                  <div class="room-info">
-                    <h3>{{ room.room.name }}</h3>
-
-                    <p>Capacity :
-                      {{ room.room.capacity }}</p>
-
-                    <p>Qty :
-                      {{ room.quantity }}</p>
-                  </div>
-
-                  <div class="room-price">₹ {{ room.subtotal }}</div>
-                </div>
-              {% empty %}
-                <p>No Rooms Selected</p>
               {% endfor %}
             </div>
           </div>
         {% endif %}
 
-        <!-- ================================================= -->
-        <!-- FURNITURE DETAILS -->
-        <!-- ================================================= -->
-
+        <!-- FURNITURE SELECTION -->
         {% if booking.furniture.all %}
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon brown">
-                  <i class="fa-solid fa-couch"></i>
-                </div>
-
-                <div>
-                  <h2>Furniture Selection</h2>
-
-                  <p>Furniture booked by customer</p>
-                </div>
-              </div>
+          <div class="expo-card">
+            <div class="section-title">
+              <i class="fa-solid fa-chair"></i> Furniture Selection
             </div>
-
-            <div class="furniture-grid">
-              {% for item in booking.furniture.all %}
-                <div class="furniture-card">
-                  <div class="furniture-icon">
-                    <i class="fa-solid fa-chair"></i>
-                  </div>
-
-                  <h3>{{ item.furniture.name }}</h3>
-
-                  <span>Qty : {{ item.quantity }}</span>
-
-                  <small>
-                    Price :
-
-                    ₹ {{ item.price }}
-                  </small>
-
-                  <strong>
-                    Total :
-
-                    ₹ {{ item.subtotal }}
-                  </strong>
+            <div class="item-card-grid">
+              {% for b_furn in booking.furniture.all %}
+                <div class="item-card">
+                  <h4>{{ b_furn.furniture.name }}</h4>
+                  <p>Qty: {{ b_furn.quantity }} {{ b_furn.furniture.unit }}</p>
+                  <div class="price">₹ {{ b_furn.subtotal|default:b_furn.price }}</div>
                 </div>
-              {% empty %}
-                <p>No Furniture Selected</p>
               {% endfor %}
             </div>
           </div>
         {% endif %}
 
-        <!-- ================================================= -->
-        <!-- STAGE DESIGN -->
-        <!-- ================================================= -->
-
+        <!-- STAGE DECORATION -->
         {% if booking.stage %}
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon pink">
-                  <i class="fa-solid fa-mountain-city"></i>
-                </div>
-
-                <div>
-                  <h2>Stage Decoration</h2>
-
-                  <p>Selected decoration package</p>
-                </div>
-              </div>
+          <div class="expo-card">
+            <div class="section-title">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Stage Decoration
             </div>
-
-            <div class="stage-layout">
-              <div class="stage-image">
-                {% if booking.stage.stage.image %}
-                  <img src="{{ booking.stage.stage.image.url }}" alt="" />
-                {% else %}
-                  <img src="{% static 'cms/images/default_stage.jpg' %}" />
-                {% endif %}
-              </div>
-
-              <div class="stage-content">
-                <h2>{{ booking.stage.stage.name }}</h2>
-
-                <p>{{ booking.stage.stage.description }}</p>
-
-                <div class="feature-list">
-                  <div class="feature-item">
-                    <i class="fa-solid fa-palette"></i>
-
-                    Theme :
-
-                    {{ booking.stage.stage.theme }}
-                  </div>
-
-                  <div class="feature-item">
-                    <i class="fa-solid fa-ruler-combined"></i>
-
-                    Size :
-
-                    {{ booking.stage.stage.size }}
-                  </div>
-
-                  <div class="feature-item">
-                    <i class="fa-solid fa-spa"></i>
-
-                    Flowers :
-
-                    {{ booking.stage.stage.flowers }}
-                  </div>
-
-                  <div class="feature-item">
-                    <i class="fa-solid fa-lightbulb"></i>
-
-                    Lighting :
-
-                    {{ booking.stage.stage.lighting }}
-                  </div>
+            <div class="stage-preview-card">
+              {% if booking.stage.stage.image %}
+                <img src="{{ booking.stage.stage.image.url }}" alt="{{ booking.stage.stage.name }}" class="stage-img" onclick="openFullImageModal('{{ booking.stage.stage.image.url }}', '{{ booking.stage.stage.name|escapejs }} Stage')" title="Click to view full image" />
+              {% else %}
+                <div style="height: 110px; background: var(--expo-bg-subtle); border-radius: var(--expo-radius-md); display: flex; align-items: center; justify-content: center; color: var(--expo-text-muted); border: 1px solid var(--expo-border);">
+                  <i class="fa-solid fa-masks-theater" style="font-size: 28px;"></i>
                 </div>
-
-                <div class="stage-price">₹ {{ booking.stage.price }}</div>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- ================================================= -->
-        <!-- CATERING DETAILS -->
-        <!-- ================================================= -->
-
-        {% if booking.catering %}
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon orange">
-                  <i class="fa-solid fa-utensils"></i>
-                </div>
-
-                <div>
-                  <h2>Catering Details</h2>
-                  <p>Selected Package & Menu</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="catering-wrapper">
-              <!-- Package Summary -->
-
-              <div class="package-summary">
-                <div class="package-left">
-                  <h2>{{ booking.catering.package.name }}</h2>
-
-                  <p>Premium Catering Package</p>
-                </div>
-
-                <div class="package-right">
-                  <div class="guest-box">
-                    <h2>{{ booking.catering.guest_count }}</h2>
-
-                    <span>Guests</span>
-                  </div>
-
-                  <div class="price-box">
-                    ₹ {{ booking.catering.price_per_plate }}
-
-                    <small>Per Plate</small>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Menu -->
-              <div class="menu-grid">
-                {% for section, items in menu_sections.items %}
-                  <div class="menu-card">
-                    <h3>{{ section }}</h3>
-
-                    <ul>
-                      {% for item in items %}
-                        <li>
-                          <i class="fa-solid fa-circle-check"></i>
-
-                          {{ item.item_name }}
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                {% endfor %}
-              </div>
-
-              <!-- Total -->
-
-              <div class="catering-total">
-                <span>Total Catering Cost</span>
-
-                <h2>₹ {{ booking.catering.total_price }}</h2>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- ================================================= -->
-        <!-- PAYMENT SUMMARY -->
-        <!-- ================================================= -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon green">
-                <i class="fa-solid fa-wallet"></i>
-              </div>
-
+              {% endif %}
               <div>
-                <h2>Payment Summary</h2>
-
-                <p>Booking financial details</p>
+                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: var(--expo-text-main);">
+                  {{ booking.stage.stage.name }}
+                </h3>
+                <p style="margin: 0 0 10px 0; color: var(--expo-text-muted); font-size: 13px;">Selected stage decoration arrangement.</p>
+                <div class="price-mono" style="font-size: 17px; font-weight: 700; color: var(--expo-text-main);">₹ {{ booking.stage.price }}</div>
               </div>
             </div>
           </div>
+        {% endif %}
 
-          <div class="payment-card">
-            <div class="payment-row">
-              <span>Hall Charges</span>
-
-              <strong>₹ {{ hall_total }}</strong>
+        <!-- CATERING DETAILS -->
+        {% if booking.catering %}
+          <div class="expo-card">
+            <div class="section-title">
+              <i class="fa-solid fa-utensils"></i> Catering Details
             </div>
-
-            <div class="payment-row">
-              <span>Room Charges</span>
-
-              <strong>₹ {{ room_total }}</strong>
-            </div>
-
-            <div class="payment-row">
-              <span>Furniture</span>
-
-              <strong>₹ {{ furniture_total }}</strong>
-            </div>
-
-            <div class="payment-row">
-              <span>Stage</span>
-
-              <strong>₹ {{ stage_total }}</strong>
-            </div>
-
-            <div class="payment-row">
-              <span>Services</span>
-              <strong>₹ {{ service_total }}</strong>
-            </div>
-
-            <div class="payment-row">
-              <span>Catering</span>
-
-              <strong>₹ {{ catering_total }}</strong>
-            </div>
-
-            <hr />
-
-            <div class="payment-row total">
-              <span>Total Amount</span>
-
-              <strong>₹ {{ booking.total_amount }}</strong>
+            <div class="catering-card">
+              <div class="catering-header">
+                <div>
+                  <h3>{{ booking.catering.package.name }}</h3>
+                  <span style="font-size: 13px; color: var(--expo-text-muted);">Per plate cost: ₹ {{ booking.catering.price_per_plate }}</span>
+                </div>
+                <div class="price-mono" style="font-size: 17px; font-weight: 700;">₹ {{ booking.catering.total_price }}</div>
+              </div>
+              <div class="catering-total-bar">
+                <span>Total Catering Cost</span>
+                <span class="price-mono">₹ {{ booking.catering.total_price }}</span>
+              </div>
             </div>
           </div>
+        {% endif %}
+
+        <!-- PAYMENT SUMMARY -->
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-wallet"></i> Payment Summary
+          </div>
+          <table class="payment-table">
+            <tbody>
+              <tr>
+                <td>Hall Charges</td>
+                <td class="price-mono">₹ {{ hall_total|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Room Charges</td>
+                <td class="price-mono">₹ {{ room_total|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Furniture Charges</td>
+                <td class="price-mono">₹ {{ furniture_total|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Stage Decoration</td>
+                <td class="price-mono">₹ {{ stage_total|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Services</td>
+                <td class="price-mono">₹ {{ service_total|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Catering Services</td>
+                <td class="price-mono">₹ {{ catering_total|floatformat:2 }}</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total Amount</td>
+                <td class="price-mono">₹ {{ booking.total_amount|floatformat:2 }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- ================================================= -->
       <!-- RIGHT SIDEBAR -->
-      <!-- ================================================= -->
-
-      <aside class="booking-sidebar">
-        <!-- Timeline -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon blue">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-              </div>
-
-              <div>
-                <h2>Timeline</h2>
-              </div>
-            </div>
+      <div class="booking-right">
+        <!-- TIMELINE -->
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-clock-rotate-left"></i> Booking Timeline
           </div>
-
           <div class="timeline">
-            <div class="timeline-item completed">Booking Created</div>
-
-            <div class="timeline-item completed">Customer Verified</div>
-
-            <div class="timeline-item active">Payment Pending</div>
-
-            <div class="timeline-item">Hall Reserved</div>
-
-            <div class="timeline-item">Event Completed</div>
-          </div>
-        </div>
-
-        <!-- Notes -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon purple">
-                <i class="fa-solid fa-note-sticky"></i>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <h4>Booking Created</h4>
+                <p>{{ booking.booking_date|date:"d M Y - h:i A" }}</p>
               </div>
-
-              <div>
-                <h2>Admin Notes</h2>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <h4>Customer Verified</h4>
+                <p>{{ booking.customer.name }} ({{ booking.customer.phone }})</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <h4>Status: {{ booking.status|title }}</h4>
+                <p>Event Date: {{ booking.event_date|date:"d M Y" }}</p>
               </div>
             </div>
           </div>
-
-          <div class="notes-box">
-            <textarea placeholder="Write internal notes here..."></textarea>
-          </div>
         </div>
 
-        <!-- Quick Contact -->
-
-        <div class="glass-card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="card-icon orange">
-                <i class="fa-solid fa-address-book"></i>
-              </div>
-
-              <div>
-                <h2>Quick Contact</h2>
-              </div>
-            </div>
+        <!-- ADMIN NOTES -->
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-note-sticky"></i> Admin Notes
           </div>
+          <textarea placeholder="Write internal notes for this booking..." rows="4" style="width: 100%; padding: 10px 12px; border-radius: var(--expo-radius-md); border: 1px solid var(--expo-border-strong); outline: none; font-family: 'Inter', sans-serif; font-size: 13px; box-sizing: border-box; resize: vertical; margin-bottom: 12px;"></textarea>
+          <button type="button" class="btn-expo-primary" style="width: 100%;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Admin Note
+          </button>
+        </div>
 
-          <div class="quick-actions">
-            <a href="#" class="quick-btn">
-              <i class="fa-solid fa-phone"></i>
-
-              Call
+        <!-- QUICK CONTACT -->
+        <div class="expo-card">
+          <div class="section-title">
+            <i class="fa-solid fa-address-book"></i> Quick Contact
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a href="tel:{{ booking.customer.phone }}" class="btn-expo-secondary" style="justify-content: flex-start;">
+              <i class="fa-solid fa-phone"></i> Call {{ booking.customer.phone }}
             </a>
-
-            <a href="#" class="quick-btn">
-              <i class="fa-brands fa-whatsapp"></i>
-
-              WhatsApp
+            <a href="https://wa.me/{{ booking.customer.phone }}" target="_blank" class="btn-expo-secondary" style="justify-content: flex-start;">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp Message
             </a>
-
-            <a href="#" class="quick-btn">
-              <i class="fa-solid fa-envelope"></i>
-
-              Email
+            <a href="mailto:{{ booking.customer.email }}" class="btn-expo-secondary" style="justify-content: flex-start;">
+              <i class="fa-solid fa-envelope"></i> Send Email
             </a>
           </div>
         </div>
-      </aside>
+      </div>
     </div>
-
-    <!-- ================================================= -->
-    <!-- FLOATING ACTION BAR -->
-    <!-- ================================================= -->
-
-    {% comment %} <div class="floating-actions">
-      <a href="#" class="btn primary">
-        <i class="fa-solid fa-pen"></i>
-
-        Edit
-      </a>
-
-      <a href="#" class="btn success">
-        <i class="fa-solid fa-file-invoice"></i>
-
-        Invoice
-      </a>
-
-      <a href="#" class="btn info">
-        <i class="fa-solid fa-print"></i>
-
-        Print
-      </a>
-
-      <a href="#" class="btn warning">
-        <i class="fa-solid fa-circle-check"></i>
-
-        Confirm
-      </a>
-
-      <a href="#" class="btn danger">
-        <i class="fa-solid fa-ban"></i>
-
-        Cancel
-      </a>
-    </div> {% endcomment %}
   </div>
 {% endblock %}

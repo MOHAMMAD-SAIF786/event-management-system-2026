@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Bookings | Royal Events{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user_auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="account-container">
+    <div class="account-header">
+        <h1>My Event Bookings</h1>
+        <p>Track, review and inspect all your reserved event packages & quotations</p>
+    </div>
+
+    <div class="account-grid">
+        <!-- Sidebar Navigation -->
+        <aside class="account-sidebar">
+            <div class="account-user-card">
+                <div class="account-avatar">
+                    {{ request.user.first_name|slice:":1"|upper|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="account-user-info">
+                    <h3>{{ request.user.first_name|default:request.user.username }}</h3>
+                    <p>{{ request.user.email|default:"No email set" }}</p>
+                </div>
+            </div>
+
+            <ul class="account-nav-menu">
+                <li>
+                    <a href="{% url 'accounts:profile' %}" class="account-nav-link">
+                        <i class="fa-solid fa-user"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:my_bookings' %}" class="account-nav-link active">
+                        <i class="fa-solid fa-calendar-check"></i> My Bookings
+                    </a>
+                </li>
+                {% if user.is_staff or user.is_superuser or is_admin or is_superadmin or is_developer or is_cms_user or user.admin_profile %}
+                <li>
+                    <a href="{% url 'cms:dashboard' %}" class="account-nav-link" style="color: #171717; font-weight: 600; background: #f4f4f5; border: 1px solid #e4e4e7;">
+                        <i class="fa-solid fa-gauge-high" style="color: #0d74ce;"></i> CMS Admin Panel
+                    </a>
+                </li>
+                {% endif %}
+                <li>
+                    <a href="{% url 'accounts:user_logout' %}" class="account-nav-link logout-link">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Bookings List -->
+        <main class="account-content">
+            {% if user.is_staff or user.is_superuser or is_admin or is_superadmin or is_developer or is_cms_user or user.admin_profile %}
+            <div class="account-card" style="background: #171717; color: #ffffff; border-color: #262626; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 24px;">
+                <div>
+                    <h3 style="color: #ffffff; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-user-shield" style="color: #4ade80;"></i> CMS Admin Privileges Active
+                    </h3>
+                    <p style="color: #a1a1aa; font-size: 13px; margin: 0;">You have access to manage bookings, halls, catering packages, and site content.</p>
+                </div>
+                <a href="{% url 'cms:dashboard' %}" style="background: #ffffff; color: #171717; text-decoration: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
+                    Go to CMS Dashboard <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="account-card">
+                <div class="account-card-title">
+                    <span>All Reservations ({{ bookings|length }})</span>
+                    <a href="{% url 'halls_list' %}" class="auth-btn-primary" style="width: auto; padding: 6px 14px; font-size: 12px;">
+                        <i class="fa-solid fa-plus"></i> New Booking
+                    </a>
+                </div>
+
+                {% if bookings %}
+                <div style="overflow-x: auto;">
+                    <table class="account-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Event Date</th>
+                                <th>Event Type</th>
+                                <th>Guests</th>
+                                <th>Total Price</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in bookings %}
+                            <tr>
+                                <td><strong>#{{ b.id }}</strong></td>
+                                <td style="color: var(--auth-muted);">{{ b.event_date|date:"M d, Y"|default:"TBD" }}</td>
+                                <td>{{ b.event_type|default:"Custom Event" }}</td>
+                                <td>{{ b.total_guest }} guests</td>
+                                <td class="price-mono">₹{{ b.total_amount }}</td>
+                                <td>
+                                    <span class="badge-status badge-{{ b.status }}">{{ b.status }}</span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="{% url 'quotation' b.id %}" class="btn-invoice-link">
+                                        <i class="fa-solid fa-file-invoice"></i> View Invoice
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: #f4f4f5; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: var(--auth-muted); margin-bottom: 16px;">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 600; color: var(--auth-ink); margin-bottom: 8px;">No Bookings Found</h3>
+                    <p style="color: var(--auth-muted); font-size: 14px; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        You haven't reserved any venue or catering packages yet. Browse our luxury banquet halls to get started!
+                    </p>
+                    <a href="{% url 'halls_list' %}" class="auth-btn-primary" style="width: auto; padding: 10px 24px;">
+                        <i class="fa-solid fa-building-columns"></i> Browse Banquet Halls
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

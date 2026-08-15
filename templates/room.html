@@ -12,7 +12,7 @@ Room | RoyalEvents
 {% block content %}
 <!-- HERO -->
 
-<section class="room-hero" style="background-image:url('{{ room_page.hero_image.url }}');">
+<section class="room-hero" {% if room_page and room_page.hero_image %}style="background-image:url('{{ room_page.hero_image.url }}');" {% endif %}>
 
     <div class="hero-content">
 
@@ -39,41 +39,138 @@ Room | RoyalEvents
         <p>Select rooms according to your requirements</p>
     </div>
 
-    <div class="room-grid">
+    <div class="room-list">
+
         {% for room in rooms %}
-        <!-- BRIDE ROOM -->
 
-        <div class="room-card" data-price="{{ room.price }}" data-id="{{ room.id }}">
+        <article class="room-card {% cycle 'image-left' 'image-right' %}" data-price="{{ room.price }}"
+            data-id="{{ room.id }}">
 
-            <img src="{{ room.image.url }}" alt="{{ room.name }}">
+            <!-- IMAGE -->
+            <div class="room-img-wrapper">
 
-            <div class="room-content">
+                {% if room.image %}
+                <img src="{{ room.image.url }}" alt="{{ room.name }}" class="room-image">
 
-                <h3>👰 {{ room.name }}</h3>
-
-                <ul>
-                    {% for feature in room.features.all %}
-                    <li>{{ feature.name }}</li>
-                    {% endfor %}
-                </ul>
-
-                <div class="room-footer">
-
-                    <span class="price">
-                        ₹{{ room.price}}/Night
-                    </span>
-
-                    <div class="qty-box">
-                        <button class="minus">-</button>
-                        <span class="qty">0</span>
-                        <button class="plus">+</button>
-                    </div>
-
+                <div class="room-img-overlay">
+                    <button type="button" class="view-full-btn" data-image="{{ room.image.url }}"
+                        data-name="{{ room.name|escapejs }}">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        View Full Image
+                    </button>
                 </div>
+
+                {% else %}
+
+                <div class="room-no-image">
+                    <i class="fa-solid fa-bed"></i>
+                </div>
+
+                {% endif %}
 
             </div>
 
+
+            <!-- CONTENT -->
+            <div class="room-content">
+
+                <span class="room-number">
+                    {% if forloop.counter < 10 %} 0{{ forloop.counter }} {% else %} {{ forloop.counter }} {% endif %}
+                        </span>
+
+
+                        <h3>
+                            <i class="fa-solid fa-bed"></i>
+                            {{ room.name }}
+                        </h3>
+
+
+                        {% if room.description %}
+                        <p class="room-description">
+                            {{ room.description }}
+                        </p>
+                        {% endif %}
+
+
+                        <!-- FEATURES -->
+                        <ul class="room-features">
+
+                            {% for feature in room.features.all %}
+
+                            <li>
+                                <span class="room-feature-check">
+                                    <i class="fa-solid fa-check"></i>
+                                </span>
+
+                                <span>{{ feature.name }}</span>
+                            </li>
+
+                            {% empty %}
+
+                            <li class="no-room-features">
+                                No features available
+                            </li>
+
+                            {% endfor %}
+
+                        </ul>
+
+
+                        <!-- CAPACITY -->
+                        <div class="room-capacity">
+
+                            <span class="capacity-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </span>
+
+                            <span>
+                                Capacity:
+                                <strong>{{ room.capacity }}</strong>
+                                Guest{% if room.capacity != 1 %}s{% endif %}
+                            </span>
+
+                        </div>
+
+
+                        <!-- FOOTER -->
+                        <div class="room-footer">
+
+                            <div class="room-price">
+                                ₹{{ room.price }}
+                                <span>/ Night</span>
+                            </div>
+
+
+                            <div class="qty-box">
+
+                                <button type="button" class="minus">
+                                    −
+                                </button>
+
+                                <span class="qty">0</span>
+
+                                <button type="button" class="plus">
+                                    +
+                                </button>
+
+                            </div>
+
+                        </div>
+
+            </div>
+
+        </article>
+
+        {% empty %}
+
+        <div class="no-rooms">
+            <i class="fa-solid fa-bed"></i>
+
+            <h3>No Rooms Available</h3>
+
+            <p>Please check again later.</p>
         </div>
+
         {% endfor %}
 
     </div>
@@ -83,71 +180,9 @@ Room | RoyalEvents
 <!-- SUMMARY -->
 
 <section class="summary-section">
-
     <div class="summary-card">
-
-        <div class="summary-header">
-
-            <h2>Room Summary</h2>
-
-            <p>Your selected rooms</p>
-
-        </div>
-
-        <div class="summary-box active">
-
-            <div class="summary-title accordion">
-
-                <div>
-                    🛏 Room Booking
-                </div>
-
-                <div class="accordion-right">
-
-                    <strong id="roomTotal">
-                        ₹0
-                    </strong>
-
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-
-                </div>
-
-            </div>
-
-            <div class="summary-body">
-
-                <div id="roomSummary"></div>
-
-            </div>
-
-        </div>
-
-        <div class="grand-total">
-
-            <span>Total Amount</span>
-
-            <strong id="grandRoomTotal">
-                ₹0
-            </strong>
-
-        </div>
-
-        <div class="summary-buttons">
-
-            <a href="{% url 'catering' %}" class="summary-btn">
-                Select Catering
-            </a>
-
-            <button class="summary-btn final-btn" onclick="goToBookingOverview()">
-
-                Continue Booking
-
-            </button>
-
-        </div>
-
+        <!-- Rendered dynamically by unified_summary.js -->
     </div>
-
 </section>
 <script>
     console.log("Room Page Loaded");
@@ -298,32 +333,15 @@ Room | RoyalEvents
         });
 
         bookingData.roomTotal = total;
-
-        if (total === 0) {
-
-            summaryHTML = `
-
-                <div class="summary-row">
-
-                    <div class="summary-left">
-
-                        <small>No rooms selected</small>
-
-                    </div>
-
-                </div>
-
-            `;
+        if (typeof RoyalCart !== 'undefined') {
+            const cart = RoyalCart.get();
+            cart.rooms = bookingData.rooms;
+            RoyalCart.save(cart);
         }
 
-        document.getElementById("roomSummary").innerHTML =
-            summaryHTML;
-
-        document.getElementById("roomTotal").innerText =
-            "₹" + total.toLocaleString("en-IN");
-
-        document.getElementById("grandRoomTotal").innerText =
-            "₹" + total.toLocaleString("en-IN");
+        if (typeof renderUnifiedSummaryCard === 'function') {
+            renderUnifiedSummaryCard();
+        }
 
         console.table(bookingData.rooms);
 
@@ -377,5 +395,108 @@ Room | RoyalEvents
 
     }
 
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const modal = document.getElementById("imageLightboxModal");
+        const modalImage = document.getElementById("lightboxImage");
+        const modalCaption = document.getElementById("lightboxCaption");
+
+        const viewButtons = document.querySelectorAll(".view-full-btn");
+
+        if (!modal) {
+            console.error("❌ imageLightboxModal not found");
+            return;
+        }
+
+        if (!modalImage) {
+            console.error("❌ lightboxImage not found");
+            return;
+        }
+
+        viewButtons.forEach(function (button) {
+
+            button.addEventListener("click", function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const imageUrl = this.dataset.image;
+                const roomName = this.dataset.name || "";
+
+                console.log("Opening image:", imageUrl);
+
+                if (!imageUrl) {
+                    console.error("❌ Image URL missing");
+                    return;
+                }
+
+                modalImage.src = imageUrl;
+                modalImage.alt = roomName;
+
+                if (modalCaption) {
+                    modalCaption.textContent = roomName;
+                }
+
+                modal.style.display = "flex";
+                modal.style.visibility = "visible";
+                modal.style.opacity = "1";
+                document.body.style.overflow = "hidden";
+            });
+
+        });
+
+    });
+
+
+    function closeLightbox() {
+
+        const modal = document.getElementById("imageLightboxModal");
+        const modalImage = document.getElementById("lightboxImage");
+        const modalCaption = document.getElementById("lightboxCaption");
+
+        if (!modal) {
+            return;
+        }
+
+        modal.style.display = "none";
+        modal.style.visibility = "hidden";
+        modal.style.opacity = "0";
+
+        if (modalImage) {
+            modalImage.src = "";
+        }
+
+        if (modalCaption) {
+            modalCaption.textContent = "";
+        }
+
+        document.body.style.overflow = "";
+    }
+
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape") {
+            closeLightbox();
+        }
+
+    });
+
 </script>
+
+<div id="imageLightboxModal" class="lightbox-modal" onclick="if(event.target === this) closeLightbox()">
+
+    <div class="lightbox-content">
+
+        <button type="button" class="lightbox-close" onclick="closeLightbox()" title="Close">
+            &times;
+        </button>
+
+        <img id="lightboxImage" src="" alt="Full Preview">
+
+        <div id="lightboxCaption" class="lightbox-caption">
+        </div>
+
+    </div>
+</div>
 {% endblock content %}

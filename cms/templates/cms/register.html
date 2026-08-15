@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account - Royal CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'cms/css/login.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  </head>
+
+  <body>
+    <div class="login-page">
+      <div class="sky-gradient-bg"></div>
+
+      <div class="login-card">
+        <!-- LEFT PANEL: EXPO DARK BRAND SURFACE -->
+        <div class="login-left">
+          <div>
+            <div class="brand-badge">
+              <i class="fa-solid fa-crown"></i> Royal CMS
+            </div>
+            <h1>Create Your Admin Account</h1>
+            <p>Join the professional event management platform for seamless booking and hall administration.</p>
+          </div>
+
+          <div class="code-preview-box">
+            <div class="code-preview-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="code-title">setup.sh</span>
+            </div>
+            <pre><code><span class="token-keyword">npx</span> create-royal-admin --init</code></pre>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL: EXPO FORM SURFACE -->
+        <div class="login-right">
+          <div class="form-header">
+            <h2>Create Account</h2>
+            <p>Register a new admin user to manage your venues</p>
+          </div>
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert-message {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="input-box">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" name="username" placeholder="Username" required autocomplete="username" autofocus />
+            </div>
+
+            <div class="input-box">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" name="email" placeholder="Email Address" required autocomplete="email" />
+            </div>
+
+            <div class="input-box">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" name="password" placeholder="Password" required autocomplete="new-password" />
+            </div>
+
+            <div class="input-box">
+              <i class="fa-solid fa-shield-halved"></i>
+              <input type="password" name="confirm_password" placeholder="Confirm Password" required autocomplete="new-password" />
+            </div>
+
+            <button type="submit" class="btn-expo-primary">Register Account</button>
+          </form>
+
+          <div class="form-footer">
+            <p>
+              Already have an account?
+              <a href="{% url 'cms:login' %}" class="link-expo">Sign in here</a>
+            </p>
+            <a href="{% url 'halls_list' %}" class="link-back-site">
+              <i class="fa-solid fa-arrow-left"></i> Back to Public Site
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{% static 'cms/js/login.js' %}"></script>
+  </body>
+</html>

@@ -13,21 +13,30 @@
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/header.css' %}">
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/cart_sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/unified_summary.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user_auth.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'assets/logo1.png' %}">
+
     {% block extra_css %}
     {% endblock %}
 </head>
 <body>
     {% include 'partials/header.html' %}
+    {% include 'partials/toast_messages.html' %}
     
     {% block content %}
     
     {% endblock %}
     
     {% include 'partials/footer.html' %}
+    {% include 'partials/cart_sidebar.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="{% static 'js/navbar.js' %}"></script>
     <script src="{% static 'js/footer.js' %}"></script>
+    <script src="{% static 'js/cart.js' %}"></script>
+    <script src="{% static 'js/unified_summary.js' %}"></script>
 
     {% block extra_js %}
     

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Banquet Halls | Royal Events
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}" />
+{% endblock %}
+
+{% block content %}
+<!-- HERO BANNER -->
+<section class="hero" style="position: relative; min-height: 44vh; padding: 110px 20px 56px; display: flex; align-items: center; justify-content: center; text-align: center; {% if hall_page and hall_page.hero_image %}background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('{{ hall_page.hero_image.url }}') center/cover no-repeat; color: #ffffff;{% else %}background: linear-gradient(180deg, #cfe7ff 0%, #a8c8e8 40%, #ffffff 100%); color: #171717;{% endif %}">
+  <div class="hero-content" style="max-width: 800px; margin: 0 auto; z-index: 2;">
+    <span class="hall-badge" style="display: inline-block; background:{% if hall_page and hall_page.hero_image %}rgba(255,255,255,0.2){% else %}#ffffff{% endif %}; color:{% if hall_page and hall_page.hero_image %}#ffffff{% else %}#171717{% endif %}; border: 1px solid {% if hall_page and hall_page.hero_image %}rgba(255,255,255,0.3){% else %}#dcdee0{% endif %}; backdrop-filter: blur(8px); padding:6px 16px; border-radius:9999px; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase;">{{ hall_page.hero_badge|default:"LUXURY VENUES" }}</span>
+    <h1 style="font-size: 42px; color: {% if hall_page and hall_page.hero_image %}#ffffff{% else %}#171717{% endif %}; margin-top:14px; font-weight: 700; line-height: 1.2;">{{ hall_page.hero_title|default:"Our Premium Banquet Halls" }}</h1>
+    <p style="color: {% if hall_page and hall_page.hero_image %}rgba(255,255,255,0.92){% else %}#60646c{% endif %}; font-size: 16px; max-width: 680px; margin: 10px auto 0; line-height: 1.5;">{{ hall_page.hero_subtitle|default:"Discover the perfect venue for your weddings, receptions, and corporate celebrations." }}</p>
+  </div>
+</section>
+
+<!-- HALLS LIST GRID -->
+<section id="halls" style="padding: 48px 8%;">
+  <div class="hall-container">
+    {% for hall in halls %}
+      <div class="hall-card">
+        {% if hall.image %}
+          <img src="{{ hall.image.url }}" alt="{{ hall.name }}" />
+        {% else %}
+          <div style="width:100%; height:220px; background:#fafafa; display:flex; align-items:center; justify-content:center; color:#999;">
+            <i class="fa-solid fa-building-columns" style="font-size: 48px;"></i>
+          </div>
+        {% endif %}
+        <div class="hall-info">
+          <h3>{{ hall.name }}</h3>
+          <p>{{ hall.description }}</p>
+          <p>Capacity : {{ hall.capacity }} Guests</p>
+          <p>Location : {{ hall.location }}</p>
+          <div class="price">₹{{ hall.price }}</div>
+          {% if hall.booked_dates_str %}
+            <div style="background:#fff1f2; color:#9f1239; border:1px solid #fecdd3; padding:8px 12px; border-radius:6px; font-size:12px; margin-top:8px;">
+              <i class="fa-solid fa-triangle-exclamation"></i> <strong>Unavailable on:</strong> {{ hall.booked_dates_str }}
+            </div>
+          {% else %}
+            <div style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:8px 12px; border-radius:6px; font-size:12px; margin-top:8px;">
+              <i class="fa-solid fa-circle-check"></i> Available on all upcoming dates
+            </div>
+          {% endif %}
+          <div style="display: flex; gap: 8px; margin-top: 16px;">
+            <a href="javascript:void(0)" onclick="addHallToCart('{{ hall.id }}', '{{ hall.name|escapejs }}', '{{ hall.price }}', '{{ hall.capacity }}')" class="btn btn-primary" style="flex: 1; text-align: center;"><i class="fa-solid fa-cart-plus"></i> Select Hall</a>
+            <a href="{% url 'hall_detail' hall.slug %}" class="btn btn-secondary"><i class="fa-solid fa-circle-info"></i> Details</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div style="text-align:center; padding:48px; width:100%;">
+        <i class="fa-solid fa-building-columns" style="font-size:48px; color:#dcdee0; margin-bottom:16px;"></i>
+        <h3>No Banquet Halls Available</h3>
+        <p style="color:#60646c;">Please check back later.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

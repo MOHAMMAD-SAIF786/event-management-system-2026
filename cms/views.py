@@ -1,11 +1,15 @@
+import os
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.utils.timezone import now
-from booking.models import Booking
+from booking.models import Booking, BookingHall, BookingStage, BookingCatering, BookingRoom, BookingMenuItem
 from collections import defaultdict
 from accounts.models import Customer
 from halls.models import (
@@ -17,29 +21,37 @@ from halls.models import (
     StageDesign,
     StageCategory,
     ServiceCategory,
-    Service
+    Service,
+    HallPage
     )
-from rooms.models import Room, RoomFeature
+from rooms.models import Room, RoomFeature, RoomPage
+from home.models import HomePage
 from catering.models import (
     BannarFeature,
     CateringPackage,
     CateringFeature,
+    CateringPage,
     GuestPricing,
     MenuCategory,
     MenuItem,
     MenuSection,
 )
-from .models import GalleryCategory, GalleryItem
-from django.utils.text import slugify
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 
+from .models import GalleryCategory, GalleryItem, AdminProfile
+from .decorators import cms_login_required, superadmin_required, developer_required
+from accounts.session_auth import cms_admin_login, cms_admin_logout
+from django.utils.text import slugify
 
 
 # 1. ADMIN LOGIN VIEW
 def admin_login(request):
-    if request.user.is_authenticated:
-        return redirect('cms:dashboard')
+    admin_user = getattr(request, "admin_user", None) or request.user
+    if admin_user and admin_user.is_authenticated:
+        if hasattr(admin_user, "admin_profile") or admin_user.is_superuser or admin_user.is_staff:
+            if not hasattr(admin_user, "admin_profile"):
+                role = "developer" if admin_user.is_superuser else "admin"
+                AdminProfile.objects.create(user=admin_user, role=role)
+            return redirect('cms:dashboard')
 
     if request.method == 'POST':
         username_input = request.POST.get('username')
@@ -48,17 +60,38 @@ def admin_login(request):
         user = authenticate(request, username=username_input, password=password_input)
 
         if user is not None:
-            login(request, user)
-            messages.success(request, f"Welcome, {user.username}!")
-            return redirect('cms:dashboard')
+            if user.is_superuser and not hasattr(user, "admin_profile"):
+                AdminProfile.objects.create(user=user, role="developer")
+            elif user.is_staff and not hasattr(user, "admin_profile"):
+                AdminProfile.objects.create(user=user, role="admin")
+
+            if hasattr(user, "admin_profile"):
+                cms_admin_login(request, user)
+                messages.success(request, f"Welcome back, {user.first_name or user.username}!")
+                return redirect('cms:dashboard')
+            else:
+                messages.error(request, "Access denied. CMS Admin privileges required.")
         else:
             messages.error(request, "Invalid username or password!")
 
     return render(request, 'cms/login.html')
 
 
-@login_required(login_url="admin_login")
+
+@cms_login_required
 def dashboard(request):
+    homepage = HomePage.objects.first()
+    if not homepage:
+        homepage = HomePage.objects.create(hero_title="Royal Event Management", hero_description="Make Your Event Memorable")
+
+    if request.method == "POST" and request.POST.get("action_type") == "update_home_hero":
+        homepage.hero_title = request.POST.get("hero_title", homepage.hero_title)
+        homepage.hero_description = request.POST.get("hero_description", homepage.hero_description)
+        if request.FILES.get("hero_image"):
+            homepage.hero_image = request.FILES.get("hero_image")
+        homepage.save()
+        messages.success(request, "Homepage Hero updated successfully!")
+        return redirect("cms:dashboard")
 
     total_bookings = Booking.objects.count()
 
@@ -84,11 +117,27 @@ def dashboard(request):
         total=Sum("total_amount")
     )["total"] or 0
 
+    pending_revenue = Booking.objects.filter(
+        status="pending"
+    ).aggregate(
+        total=Sum("total_amount")
+    )["total"] or 0
+
+    cancelled_revenue = Booking.objects.filter(
+        status="cancelled"
+    ).aggregate(
+        total=Sum("total_amount")
+    )["total"] or 0
+
+    projected_revenue = revenue + pending_revenue
+
     recent_bookings = Booking.objects.order_by(
         "-booking_date"
-    )[:8]
+    )[:5]
 
     context = {
+
+        "homepage": homepage,
 
         "total_bookings": total_bookings,
 
@@ -102,6 +151,12 @@ def dashboard(request):
 
         "revenue": revenue,
 
+        "pending_revenue": pending_revenue,
+
+        "cancelled_revenue": cancelled_revenue,
+
+        "projected_revenue": projected_revenue,
+
         "recent_bookings": recent_bookings,
 
     }
@@ -113,12 +168,11 @@ def dashboard(request):
     )
 
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def admin_logout(request):
-
-    logout(request)
-
-    return redirect("admin_login")
+    cms_admin_logout(request)
+    messages.info(request, "CMS Admin logged out successfully.")
+    return redirect("cms:admin_login")
 
 # ===========================
 # BOOKINGS
@@ -126,13 +180,22 @@ def admin_logout(request):
 
 def booking_list(request):
 
-    search = request.GET.get("search", "")
-    status = request.GET.get("status", "")
+    search = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "").strip()
 
-    bookings = Booking.objects.all().order_by("-id")
+    bookings = Booking.objects.select_related("customer").all().order_by("-id")
 
     if search:
-        bookings = bookings.filter(customer_name__icontains=search)
+        if search.isdigit():
+            bookings = bookings.filter(
+                Q(id=int(search)) |
+                Q(customer__phone__icontains=search)
+            )
+        else:
+            bookings = bookings.filter(
+                Q(customer__name__icontains=search) |
+                Q(event_type__icontains=search)
+            )
 
     if status:
         bookings = bookings.filter(status=status)
@@ -198,25 +261,194 @@ def booking_detail(request, id):
        stage_total +
        service_total +
        catering_total
-)
+    )
+
+    if booking.status.lower() == 'confirmed':
+        paid_amount = booking.total_amount
+        remaining_amount = Decimal('0.00')
+    elif booking.status.lower() == 'pending':
+        paid_amount = Decimal('10000.00') if booking.total_amount > Decimal('10000.00') else Decimal('0.00')
+        remaining_amount = booking.total_amount - paid_amount
+    else:
+        paid_amount = Decimal('0.00')
+        remaining_amount = booking.total_amount
 
     return render(
-    request,
-    "cms/bookings/detail.html",
-    {
-        "booking": booking,
-        "menu_sections": dict(menu_sections),
-        "hall_total": hall_total,
-        "room_total": room_total,
-        "furniture_total": furniture_total,
-        "stage_total": stage_total,
-        "service_total": service_total,
-        "catering_total": catering_total,
-        "grand_total": grand_total,
-    }
-)
+        request,
+        "cms/bookings/detail.html",
+        {
+            "booking": booking,
+            "menu_sections": dict(menu_sections),
+            "hall_total": hall_total,
+            "room_total": room_total,
+            "furniture_total": furniture_total,
+            "stage_total": stage_total,
+            "service_total": service_total,
+            "catering_total": catering_total,
+            "grand_total": grand_total,
+            "paid_amount": paid_amount,
+            "remaining_amount": remaining_amount,
+        }
+    )
 
-@login_required(login_url="admin_login")
+@cms_login_required
+def booking_add(request):
+    halls = Hall.objects.all()
+    stages = StageDesign.objects.all()
+    caterings = CateringPackage.objects.prefetch_related('sections__categories__items').all()
+    rooms = Room.objects.all()
+
+    if request.method == "POST":
+        customer_name = request.POST.get("customer_name", "").strip()
+        customer_phone = request.POST.get("customer_phone", "").strip()
+        customer_email = request.POST.get("customer_email", "").strip()
+        customer_address = request.POST.get("customer_address", "").strip()
+
+        event_type = request.POST.get("event_type", "Wedding")
+        event_date = request.POST.get("event_date")
+        status = request.POST.get("status", "pending")
+        total_amount = request.POST.get("total_amount", "0")
+        total_guest_str = request.POST.get("total_guest", "100")
+        hall_id = request.POST.get("hall_id")
+        stage_id = request.POST.get("stage_id")
+        catering_id = request.POST.get("catering_id")
+
+        try:
+            total_guest = int(total_guest_str)
+        except (ValueError, TypeError):
+            total_guest = 100
+
+        if customer_phone:
+            customer, _ = Customer.objects.get_or_create(
+                phone=customer_phone,
+                defaults={
+                    "name": customer_name or "New Customer",
+                    "email": customer_email,
+                    "address": customer_address,
+                }
+            )
+            if customer_name and customer.name != customer_name:
+                customer.name = customer_name
+                if customer_email:
+                    customer.email = customer_email
+                if customer_address:
+                    customer.address = customer_address
+                customer.save()
+        else:
+            customer = Customer.objects.create(
+                name=customer_name or "Guest Customer",
+                phone=customer_phone or "0000000000",
+                email=customer_email,
+                address=customer_address,
+            )
+
+        try:
+            total_val = float(total_amount)
+        except (ValueError, TypeError):
+            total_val = 0.0
+
+        booking = Booking.objects.create(
+            customer=customer,
+            event_type=event_type,
+            event_date=event_date if event_date else None,
+            status=status,
+            total_amount=total_val,
+            total_guest=total_guest,
+        )
+
+        # 1. Hall Selection
+        if hall_id:
+            try:
+                hall = Hall.objects.get(id=hall_id)
+                hall_price = getattr(hall, 'price', getattr(hall, 'price_per_day', 0))
+                BookingHall.objects.create(
+                    booking=booking,
+                    hall=hall,
+                    price=hall_price or 0
+                )
+            except Hall.DoesNotExist:
+                pass
+
+        # 2. Stage Selection
+        if stage_id:
+            try:
+                stage = StageDesign.objects.get(id=stage_id)
+                BookingStage.objects.create(
+                    booking=booking,
+                    stage=stage,
+                    price=getattr(stage, 'price', 0) or 0
+                )
+            except StageDesign.DoesNotExist:
+                pass
+
+        # 3. Room Selection
+        for room in rooms:
+            qty_str = request.POST.get(f"room_qty_{room.id}", "0")
+            try:
+                qty = int(qty_str)
+            except (ValueError, TypeError):
+                qty = 0
+            if qty > 0:
+                subtotal = room.price * qty
+                BookingRoom.objects.create(
+                    booking=booking,
+                    room=room,
+                    quantity=qty,
+                    price=room.price,
+                    subtotal=subtotal
+                )
+
+        # 4. Catering Selection & Detailed Menu Items
+        if catering_id:
+            try:
+                cat = CateringPackage.objects.get(id=catering_id)
+                price_per_plate = getattr(cat, 'price', getattr(cat, 'price_per_plate', 0)) or 0
+                catering_total = price_per_plate * total_guest
+                booking_catering = BookingCatering.objects.create(
+                    booking=booking,
+                    package=cat,
+                    guest_count=total_guest,
+                    price_per_plate=price_per_plate,
+                    total_price=catering_total
+                )
+
+                selected_menu_items = request.POST.getlist("selected_menu_items")
+                if selected_menu_items:
+                    items = MenuItem.objects.filter(id__in=selected_menu_items)
+                    for mi in items:
+                        sec_title = mi.section.section.title if hasattr(mi.section, 'section') else "Main Course"
+                        BookingMenuItem.objects.create(
+                            booking_catering=booking_catering,
+                            section=sec_title,
+                            item_name=mi.name
+                        )
+                else:
+                    for sec in cat.sections.all():
+                        for cat_group in sec.categories.all():
+                            for mi in cat_group.items.filter(is_available=True):
+                                BookingMenuItem.objects.create(
+                                    booking_catering=booking_catering,
+                                    section=sec.title,
+                                    item_name=mi.name
+                                )
+            except CateringPackage.DoesNotExist:
+                pass
+
+        messages.success(request, f"Booking #BK-{booking.id} created successfully.")
+        return redirect("cms:booking_detail", id=booking.id)
+
+    return render(
+        request,
+        "cms/bookings/add.html",
+        {
+            "halls": halls,
+            "stages": stages,
+            "caterings": caterings,
+            "rooms": rooms,
+        }
+    )
+
+@cms_login_required
 def booking_edit(request, id):
 
     booking = get_object_or_404(
@@ -244,7 +476,7 @@ def booking_edit(request, id):
         )
 
         return redirect(
-            "booking_detail",
+            "cms:booking_detail",
             id=booking.id
         )
 
@@ -256,7 +488,7 @@ def booking_edit(request, id):
         }
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def booking_delete(request, id):
 
     booking = get_object_or_404(
@@ -275,7 +507,7 @@ def booking_delete(request, id):
 
     return redirect("cms:booking_list")
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def customer_list(request):
 
     search = request.GET.get("search", "")
@@ -328,7 +560,7 @@ def customer_list(request):
     
 from django.db.models import Sum
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def customer_detail(request, id):
 
     customer = get_object_or_404(Customer, id=id)
@@ -358,7 +590,7 @@ def customer_detail(request, id):
         }
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def customer_edit(request, id):
 
     customer = get_object_or_404(
@@ -384,7 +616,7 @@ def customer_edit(request, id):
         )
 
         return redirect(
-            "customer_detail",
+            "cms:customer_detail",
             id=customer.id
         )
 
@@ -396,7 +628,7 @@ def customer_edit(request, id):
         }
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def customer_delete(request, id):
 
     customer = get_object_or_404(
@@ -412,7 +644,7 @@ def customer_delete(request, id):
         )
 
         return redirect(
-            "customer_detail",
+            "cms:customer_detail",
             id=customer.id
         )
 
@@ -423,10 +655,23 @@ def customer_delete(request, id):
         "Customer deleted successfully."
     )
 
-    return redirect("customer_list")
+    return redirect("cms:customer_list")
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_list(request):
+    hall_page, _ = HallPage.objects.get_or_create(id=1)
+
+    if request.method == "POST":
+        action = request.POST.get("action_type")
+        if action == "update_hero":
+            hall_page.hero_title = request.POST.get("hero_title", hall_page.hero_title)
+            hall_page.hero_subtitle = request.POST.get("hero_subtitle", hall_page.hero_subtitle)
+            hall_page.hero_badge = request.POST.get("hero_badge", hall_page.hero_badge)
+            if "hero_image" in request.FILES:
+                hall_page.hero_image = request.FILES["hero_image"]
+            hall_page.save()
+            messages.success(request, "Hall page hero settings updated successfully!")
+            return redirect("cms:hall_list")
 
     halls = Hall.objects.all().order_by("-created_at")
 
@@ -434,11 +679,12 @@ def hall_list(request):
         request,
         "cms/halls/hall_list.html",
         {
-            "halls": halls
+            "halls": halls,
+            "hall_page": hall_page,
         }
     )
     
-@login_required(login_url="admin_login")  
+@cms_login_required  
 def hall_detail(request, id):
 
     hall = get_object_or_404(Hall, id=id)
@@ -451,7 +697,7 @@ def hall_detail(request, id):
         }
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_edit(request, id):
 
     hall = get_object_or_404(Hall, id=id)
@@ -492,7 +738,7 @@ def hall_edit(request, id):
         },
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_add(request):
 
     if request.method == "POST":
@@ -527,44 +773,37 @@ def hall_add(request):
         "cms/halls/hall_add.html"
     )
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_feature_add(request, hall_id):
-
     hall = get_object_or_404(Hall, id=hall_id)
-
     if request.method == "POST":
+        title = request.POST.get("title")
+        subtitle = request.POST.get("subtitle", "")
+        icon = request.POST.get("icon") or "fa-solid fa-star"
+        if title:
+            HallFeature.objects.create(
+                hall=hall,
+                title=title,
+                subtitle=subtitle,
+                icon=icon,
+                order=HallFeature.objects.filter(hall=hall).count() + 1,
+            )
+            messages.success(request, "Hall Feature Added Successfully")
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer if referer else "cms:cms_hall_detail", id=hall.id)
 
-     HallFeature.objects.create(
-
-       hall=hall,
-
-       title=request.POST.get("title"),
-
-       subtitle=request.POST.get("subtitle"),
-
-       icon="fa-solid fa-check",
-
-       order=HallFeature.objects.filter(hall=hall).count()+1,
-
-    )
-
-    return redirect("hall_edit", id=hall.id)
-
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_feature_edit(request, id):
-
     feature = get_object_or_404(HallFeature, id=id)
-
     if request.method == "POST":
-
-        feature.title = request.POST.get("title")
-        feature.subtitle = request.POST.get("subtitle")
-
+        feature.title = request.POST.get("title", feature.title)
+        feature.subtitle = request.POST.get("subtitle", feature.subtitle)
+        if request.POST.get("icon"):
+            feature.icon = request.POST.get("icon")
         feature.save()
-
         messages.success(request, "Feature Updated Successfully")
-
-        return redirect("hall_edit", id=feature.hall.id)
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer if referer else "cms:cms_hall_detail", id=feature.hall.id)
 
     return render(
         request,
@@ -574,20 +813,42 @@ def hall_feature_edit(request, id):
         }
     )
     
-@login_required(login_url="admin_login")
-def hall_feature_delete(request,id):
-
-    feature=get_object_or_404(HallFeature,id=id)
-
-    hall_id=feature.hall.id
-
+@cms_login_required
+def hall_feature_delete(request, id):
+    feature = get_object_or_404(HallFeature, id=id)
+    hall_id = feature.hall.id
     feature.delete()
+    messages.success(request, "Feature Deleted")
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer if referer else "cms:cms_hall_detail", id=hall_id)
 
-    messages.success(request,"Feature Deleted")
+@cms_login_required
+def hall_toggle_status(request, id):
+    hall = get_object_or_404(Hall, id=id)
 
-    return redirect("cms:hall_edit", id=hall_id)
+    try:
+        hall.is_active = not hall.is_active
+        hall.save(update_fields=["is_active"])
 
-@login_required(login_url="admin_login")
+        return JsonResponse({
+            "status": "success",
+            "is_active": hall.is_active,
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e),
+        }, status=500)
+
+@cms_login_required
+def hall_delete(request, id):
+    hall = get_object_or_404(Hall, id=id)
+    hall.delete()
+    messages.success(request, "Hall deleted successfully.")
+    return redirect("cms:hall_list")
+
+@cms_login_required
 def hall_feature_save(request, hall_id):
     print("POST HIT")
     print(request.POST)
@@ -619,7 +880,7 @@ def hall_feature_save(request, hall_id):
 
     return redirect("cms:hall_edit", id=hall.id)
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_gallery_save(request, hall_id):
 
     hall = get_object_or_404(Hall, id=hall_id)
@@ -645,7 +906,7 @@ def hall_gallery_save(request, hall_id):
     return redirect("cms:hall_edit", id=hall.id)
 
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def hall_gallery_delete(request, id):
 
     gallery = get_object_or_404(HallGallery, id=id)
@@ -659,7 +920,7 @@ def hall_gallery_delete(request, id):
     return redirect("cms:hall_edit", id=hall_id)
 
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def furniture_add(request):
 
     hall_id = request.GET.get("hall")
@@ -687,88 +948,75 @@ def furniture_add(request):
         }
     )
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def furniture_save(request):
-
     if request.method == "POST":
+        category_id = request.POST.get("category") or request.POST.get("category_id")
+        if not category_id:
+            messages.error(request, "Please select a furniture category.")
+            return redirect("cms:furniture_add")
 
-        category = get_object_or_404(
-            FurnitureCategory,
-            id=request.POST.get("category")
-        )
+        category = get_object_or_404(FurnitureCategory, id=category_id)
+
+        price = request.POST.get("price") or 0.00
+        default_qty = request.POST.get("default_quantity") or 0
+        min_qty = request.POST.get("min_quantity") or None
+        max_qty = request.POST.get("max_quantity") or None
 
         FurnitureItem.objects.create(
-
             category=category,
-
             name=request.POST.get("name"),
-
-            price=request.POST.get("price"),
-
-            unit=request.POST.get("unit"),
-
-            default_quantity=request.POST.get("default_quantity"),
-
-            min_quantity=request.POST.get("min_quantity"),
-
-            max_quantity=request.POST.get("max_quantity"),
-
+            price=price,
+            unit=request.POST.get("unit", ""),
+            default_quantity=default_qty,
+            min_quantity=min_qty,
+            max_quantity=max_qty,
             is_required="is_required" in request.POST,
-
-            order=FurnitureItem.objects.filter(
-                category=category
-            ).count()+1
-
+            order=FurnitureItem.objects.filter(category=category).count() + 1,
         )
 
-        messages.success(
-            request,
-            "Furniture Added Successfully"
-        )
+        messages.success(request, "Furniture Added Successfully")
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer if referer else "cms:furniture_list")
 
-        return redirect(
-            "cms:cms_hall_detail",
-            id=category.hall.id
-        )
-        
-@login_required(login_url="admin_login")
+    return redirect("cms:furniture_list")
+
+@cms_login_required
 def furniture_category_add(request):
-
     if request.method == "POST":
+        hall_id = request.POST.get("hall")
+        if not hall_id:
+            messages.error(request, "Please select a hall first.")
+            return redirect("cms:furniture_add")
 
-        hall = get_object_or_404(
-            Hall,
-            id=request.POST.get("hall")
-        )
+        hall = get_object_or_404(Hall, id=hall_id)
+        category_name = request.POST.get("category")
 
-        FurnitureCategory.objects.create(
+        if category_name:
+            FurnitureCategory.objects.create(
+                hall=hall,
+                name=category_name,
+                order=FurnitureCategory.objects.filter(hall=hall).count() + 1,
+            )
+            messages.success(request, "Category Created Successfully")
 
-            hall=hall,
+        referer = request.META.get('HTTP_REFERER')
+        return redirect(referer if referer else "cms:furniture_list")
 
-            name=request.POST.get("category"),
+    return redirect("cms:furniture_list")
 
-            order=FurnitureCategory.objects.filter(
-                hall=hall
-            ).count()+1
+@cms_login_required
+def furniture_category_delete(request, id):
+    category = get_object_or_404(FurnitureCategory, id=id)
+    category.delete()
+    messages.success(request, "Furniture category deleted successfully.")
 
-        )
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer if referer else "cms:furniture_list")
 
-        messages.success(
-            request,
-            "Category Created"
-        )
-
-        return redirect(
-            f"/cms/furniture/add/?hall={hall.id}"
-        )
-        
-@login_required(login_url="admin_login")
+@cms_login_required
 def furniture_list(request):
-
-    halls = Hall.objects.prefetch_related(
-        "furniture_categories__items"
-    ).all()
-
+    halls = Hall.objects.prefetch_related("furniture_categories__items").all()
     return render(
         request,
         "cms/furnitures/furniture_list.html",
@@ -776,18 +1024,17 @@ def furniture_list(request):
             "halls": halls,
         },
     )
-    
-@login_required(login_url="admin_login")
+
+@cms_login_required
 def furniture_edit(request, id):
     item = get_object_or_404(FurnitureItem, id=id)
 
     if request.method == "POST":
         item.name = request.POST.get("name")
-        item.price = request.POST.get("price")
-        item.unit = request.POST.get("unit")
+        item.price = request.POST.get("price") or 0.00
+        item.unit = request.POST.get("unit", "")
         item.default_quantity = request.POST.get("default_quantity") or 0
 
-        # Empty min/max ko None set karein taaki DB error na aaye
         min_qty = request.POST.get("min_quantity")
         max_qty = request.POST.get("max_quantity")
         item.min_quantity = min_qty if min_qty else None
@@ -798,13 +1045,24 @@ def furniture_edit(request, id):
 
         messages.success(request, "Furniture Updated Successfully.")
 
-        # HTTP_REFERER: Jis page se request aayi thi (hall_detail ya furniture_list), wahi redirect karega
         referer = request.META.get('HTTP_REFERER')
         if referer:
             return redirect(referer)
 
-        return redirect("furniture_list")
-@login_required(login_url="admin_login")
+        return redirect("cms:furniture_list")
+
+    halls = Hall.objects.all()
+    categories = FurnitureCategory.objects.filter(hall=item.category.hall)
+    return render(
+        request,
+        "cms/furnitures/furniture_edit.html",
+        {
+            "item": item,
+            "halls": halls,
+            "categories": categories,
+        },
+    )
+@cms_login_required
 def furniture_delete(request, id):
 
     furniture = get_object_or_404(
@@ -823,7 +1081,7 @@ def furniture_delete(request, id):
 
     return redirect("cms:furniture_list")
     
-@login_required(login_url="admin_login")
+@cms_login_required
 def load_furniture_categories(request, hall_id):
 
     categories = FurnitureCategory.objects.filter(
@@ -841,17 +1099,18 @@ def load_furniture_categories(request, hall_id):
 
     return JsonResponse(data, safe=False)
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_design_list(request):
     # Hall -> StageCategories -> Designs
     halls = Hall.objects.prefetch_related('stage_categories__designs').all()
     return render(request, 'cms/stages/stage_design_list.html', {'halls': halls})
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_design_add(request):
     if request.method == "POST":
         category_id = request.POST.get("category_id")
         name = request.POST.get("name")
+        badge = request.POST.get("badge", "New!")
         price = request.POST.get("price") or 0.00
         image = request.FILES.get("image")
 
@@ -860,6 +1119,7 @@ def stage_design_add(request):
         StageDesign.objects.create(
             category=category,
             name=name,
+            badge=badge,
             price=price,
             image=image
         )
@@ -869,14 +1129,15 @@ def stage_design_add(request):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             return redirect(referer)
-        return redirect("stage_design_list")
+        return redirect("cms:stage_design_list")
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_design_edit(request, id):
     design = get_object_or_404(StageDesign, id=id)
 
     if request.method == "POST":
         design.name = request.POST.get("name")
+        design.badge = request.POST.get("badge", "")
         design.price = request.POST.get("price") or 0.00
         
         # Agar nayi image upload hui ho toh update karo
@@ -889,10 +1150,11 @@ def stage_design_edit(request, id):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             return redirect(referer)
-        return redirect("stage_design_list")
+        return redirect("cms:stage_design_list")
+    return redirect("cms:stage_design_list")
 
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_design_delete(request, id):
     design = get_object_or_404(StageDesign, id=id)
     design.delete()
@@ -901,9 +1163,9 @@ def stage_design_delete(request, id):
     referer = request.META.get('HTTP_REFERER')
     if referer:
         return redirect(referer)
-    return redirect("stage_design_list")
+    return redirect("cms:stage_design_list")
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_category_add(request):
     if request.method == "POST":
         hall_id = request.POST.get("hall_id")
@@ -923,10 +1185,11 @@ def stage_category_add(request):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             return redirect(referer)
-        return redirect("stage_design_list")
+        return redirect("cms:stage_design_list")
+    return redirect("cms:stage_design_list")
 
 
-@login_required(login_url="admin_login")
+@cms_login_required
 def stage_category_delete(request, id):
     category = get_object_or_404(StageCategory, id=id)
     category.delete()
@@ -935,10 +1198,10 @@ def stage_category_delete(request, id):
     referer = request.META.get('HTTP_REFERER')
     if referer:
         return redirect(referer)
-    return redirect("stage_design_list")
+    return redirect("cms:stage_design_list")
 
 # 1. ADD SERVICE CATEGORY
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_category_add(request):
     if request.method == "POST":
         hall_id = request.POST.get("hall_id")
@@ -954,25 +1217,30 @@ def service_category_add(request):
         messages.success(request, "New Service Category added successfully.")
 
         referer = request.META.get('HTTP_REFERER')
-        return redirect(referer if referer else "hall_list")
+        return redirect(referer if referer else "cms:service_list")
+    return redirect("cms:service_list")
 
 # 2. DELETE SERVICE CATEGORY
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_category_delete(request, id):
     category = get_object_or_404(ServiceCategory, id=id)
     category.delete()
     messages.success(request, "Service Category deleted successfully.")
 
     referer = request.META.get('HTTP_REFERER')
-    return redirect(referer if referer else "hall_list")
+    return redirect(referer if referer else "cms:service_list")
 
 # 3. ADD SERVICE
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_add(request):
     if request.method == "POST":
         category_id = request.POST.get("category_id")
         name = request.POST.get("name")
-        price = request.POST.get("price") or 0.00
+        raw_price = request.POST.get("price")
+        try:
+            price = min(Decimal(raw_price), Decimal('9999999999.99')) if raw_price else Decimal('0.00')
+        except Exception:
+            price = Decimal('0.00')
 
         category = get_object_or_404(ServiceCategory, id=category_id)
         Service.objects.create(
@@ -983,43 +1251,60 @@ def service_add(request):
         messages.success(request, "New Service added successfully.")
 
         referer = request.META.get('HTTP_REFERER')
-        return redirect(referer if referer else "hall_list")
+        return redirect(referer if referer else "cms:service_list")
+    return redirect("cms:service_list")
 
 # 4. EDIT SERVICE
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_edit(request, id):
     service = get_object_or_404(Service, id=id)
     if request.method == "POST":
         service.name = request.POST.get("name")
-        service.price = request.POST.get("price") or 0.00
+        raw_price = request.POST.get("price")
+        try:
+            service.price = min(Decimal(raw_price), Decimal('9999999999.99')) if raw_price else Decimal('0.00')
+        except Exception:
+            service.price = Decimal('0.00')
         service.save()
         messages.success(request, "Service updated successfully.")
 
         referer = request.META.get('HTTP_REFERER')
-        return redirect(referer if referer else "hall_list")
+        return redirect(referer if referer else "cms:service_list")
+    return redirect("cms:service_list")
 
 # 5. DELETE SERVICE
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_delete(request, id):
     service = get_object_or_404(Service, id=id)
     service.delete()
     messages.success(request, "Service deleted successfully.")
 
     referer = request.META.get('HTTP_REFERER')
-    return redirect(referer if referer else "hall_list")
+    return redirect(referer if referer else "cms:service_list")
 
-@login_required(login_url="admin_login")
-@login_required(login_url="admin_login")
+@cms_login_required
 def service_list(request):
     halls = Hall.objects.prefetch_related('service_categories__services').all()
     
     return render(request, "cms/services/service_list.html", {"halls": halls})
 
+@cms_login_required
 def room_list(request):
+    room_page, _ = RoomPage.objects.get_or_create(id=1)
+    if request.method == 'POST' and request.POST.get('action_type') == 'update_hero':
+        room_page.hero_title = request.POST.get('hero_title', room_page.hero_title)
+        room_page.hero_subtitle = request.POST.get('hero_subtitle', room_page.hero_subtitle)
+        if request.FILES.get('hero_image'):
+            room_page.hero_image = request.FILES.get('hero_image')
+        room_page.save()
+        messages.success(request, 'Room page hero updated successfully!')
+        return redirect('cms:room_list')
+
     rooms = Room.objects.prefetch_related('features').all()
-    return render(request, 'cms/rooms/room_list.html', {'rooms': rooms})
+    return render(request, 'cms/rooms/room_list.html', {'rooms': rooms, 'room_page': room_page})
 
 # 2. Add Room
+@cms_login_required
 def room_add(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -1046,20 +1331,22 @@ def room_add(request):
                 RoomFeature.objects.create(room=room, name=feat)
 
         return redirect('cms:room_list')
+    return redirect('cms:room_list')
 
 # 3. Edit Room
+@cms_login_required
 def room_edit(request, room_id):
     room = get_object_or_404(Room, id=room_id)
     if request.method == 'POST':
         room.name = request.POST.get('name')
-        room.price = request.POST.get('price')
-        room.capacity = request.POST.get('capacity')
-        room.total_rooms = request.POST.get('total_rooms')
+        room.price = request.POST.get('price') or 0.00
+        room.capacity = request.POST.get('capacity') or 1
+        room.total_rooms = request.POST.get('total_rooms') or 1
         room.description = request.POST.get('description', '')
-        
+
         if request.FILES.get('image'):
             room.image = request.FILES.get('image')
-            
+
         room.save()
 
         # Features Update
@@ -1070,7 +1357,10 @@ def room_edit(request, room_id):
             for feat in feature_list:
                 RoomFeature.objects.create(room=room, name=feat)
 
+        messages.success(request, f"Room '{room.name}' updated successfully.")
         return redirect('cms:room_list')
+
+    return redirect('cms:room_list')
 
 # 4. Delete Room
 def room_delete(request, room_id):
@@ -1087,12 +1377,33 @@ def room_delete(request, room_id):
         )
     return redirect('cms:room_list')
 
+@cms_login_required
+def room_toggle_status(request, id):
+    room = get_object_or_404(Room, id=id)
+    room.is_active = not room.is_active
+    room.save()
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"status": "success", "is_active": room.is_active})
+    messages.success(request, f"Room status updated to {'Active' if room.is_active else 'Inactive'}.")
+    return redirect("cms:room_list")
+
 
 def catering_dashboard(request):
+    catering_page, _ = CateringPage.objects.get_or_create(id=1)
+    if request.method == 'POST' and request.POST.get('action_type') == 'update_hero':
+        catering_page.hero_title = request.POST.get('hero_title', catering_page.hero_title)
+        catering_page.hero_subtitle = request.POST.get('hero_subtitle', catering_page.hero_subtitle)
+        if request.FILES.get('hero_image'):
+            catering_page.hero_image = request.FILES.get('hero_image')
+        catering_page.save()
+        messages.success(request, 'Catering page hero updated successfully!')
+        return redirect('cms:catering_list')
+
     packages = CateringPackage.objects.prefetch_related(
         'features', 'bannar_features', 'guest_pricing', 'sections__categories__items'
     ).all()
-    return render(request, 'cms/caterings/catering_list.html', {'packages': packages})
+    return render(request, 'cms/caterings/catering_list.html', {'packages': packages, 'catering_page': catering_page})
+
 
 def catering_add(request):
     if request.method == 'POST':
@@ -1130,7 +1441,8 @@ def catering_add(request):
                 if b.strip():
                     BannarFeature.objects.create(package=pkg, name=b.strip())
 
-        return redirect('catering_list')
+        return redirect('cms:catering_list')
+    return redirect('cms:catering_list')
 
 def catering_edit(request, package_id):
     pkg = get_object_or_404(CateringPackage, id=package_id)
@@ -1163,37 +1475,164 @@ def catering_edit(request, package_id):
                 if b.strip():
                     BannarFeature.objects.create(package=pkg, name=b.strip())
 
-        return redirect('catering_list')
+        return redirect('cms:catering_list')
     
-@require_POST
+@cms_login_required
 def catering_delete(request, package_id):
     pkg = get_object_or_404(CateringPackage, id=package_id)
     pkg.delete()
-    return redirect('catering_list')
+    messages.success(request, "Catering Package deleted successfully.")
+    return redirect('cms:catering_list')
+
+@cms_login_required
+def catering_toggle_status(request, id):
+    pkg = get_object_or_404(CateringPackage, id=id)
+    pkg.is_active = not pkg.is_active
+    pkg.save()
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"status": "success", "is_active": pkg.is_active})
+    messages.success(request, f"Catering package status updated to {'Active' if pkg.is_active else 'Inactive'}.")
+    return redirect("cms:catering_list")
 
 def catering_list(request):
     caterings = Room.objects.prefetch_related('features').all()
     return render(request, 'cms/rooms/catering_list.html', {'caterings': caterings})
 
-@require_POST
-def add_menu_item(request, package_id):
-    package = get_object_or_404(CateringPackage, id=package_id)
-    item_name = request.POST.get('item_name')
-    category = request.POST.get('category')
-    
-    if item_name:
-        MenuItem.objects.create(package=package, name=item_name, category=category)
-        
-    return redirect('package_detail', package_id=package.id)
+@cms_login_required
+def menu_section_add(request, package_id):
+    pkg = get_object_or_404(CateringPackage, id=package_id)
+    if request.method == "POST":
+        title = request.POST.get("title")
+        has_category = "has_category" in request.POST
+        available_items = request.POST.get("available_items", 0)
+        max_selection = request.POST.get("max_selection", 0)
+        order = request.POST.get("order", 0)
+        MenuSection.objects.create(
+            package=pkg, title=title, has_category=has_category,
+            available_items=available_items, max_selection=max_selection, order=order
+        )
+        messages.success(request, f"Menu Section '{title}' added successfully.")
+    return redirect("cms:package_detail", pk=package_id)
 
-# Menu item delete karne ke liye
-@require_POST
-def delete_menu_item(request, item_id):
-    item = get_object_or_404(MenuItem, id=item_id)
-    package_id = item.package.id
+@cms_login_required
+def menu_section_edit(request, id):
+    section = get_object_or_404(MenuSection, id=id)
+    if request.method == "POST":
+        section.title = request.POST.get("title", section.title)
+        section.has_category = "has_category" in request.POST
+        section.available_items = request.POST.get("available_items", section.available_items)
+        section.max_selection = request.POST.get("max_selection", section.max_selection)
+        section.order = request.POST.get("order", section.order)
+        section.save()
+        messages.success(request, "Menu Section updated successfully.")
+    return redirect("cms:package_detail", pk=section.package.id)
+
+@cms_login_required
+def menu_section_delete(request, id):
+    section = get_object_or_404(MenuSection, id=id)
+    pkg_id = section.package.id
+    section.delete()
+    messages.success(request, "Menu Section deleted successfully.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def menu_category_add(request, section_id):
+    section = get_object_or_404(MenuSection, id=section_id)
+    if request.method == "POST":
+        title = request.POST.get("title")
+        MenuCategory.objects.create(section=section, title=title)
+        messages.success(request, f"Category '{title}' added successfully.")
+    return redirect("cms:package_detail", pk=section.package.id)
+
+@cms_login_required
+def menu_category_delete(request, id):
+    category = get_object_or_404(MenuCategory, id=id)
+    pkg_id = category.section.package.id
+    category.delete()
+    messages.success(request, "Menu Category deleted successfully.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def menu_item_add(request, category_id):
+    category = get_object_or_404(MenuCategory, id=category_id)
+    if request.method == "POST":
+        item_names = request.POST.get("name", "")
+        names = [n.strip() for n in item_names.replace('\n', ',').split(',') if n.strip()]
+        for name in names:
+            MenuItem.objects.create(section=category, name=name)
+        messages.success(request, f"{len(names)} item(s) added successfully.")
+    return redirect("cms:package_detail", pk=category.section.package.id)
+
+@cms_login_required
+def menu_item_delete(request, id):
+    item = get_object_or_404(MenuItem, id=id)
+    pkg_id = item.section.section.package.id
     item.delete()
-    
-    return redirect('package_detail', package_id=package_id)
+    messages.success(request, "Menu Item deleted successfully.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def menu_item_toggle(request, id):
+    item = get_object_or_404(MenuItem, id=id)
+    item.is_available = not item.is_available
+    item.save()
+    pkg_id = item.section.section.package.id
+    messages.success(request, "Menu Item availability updated.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def guest_pricing_add(request, package_id):
+    pkg = get_object_or_404(CateringPackage, id=package_id)
+    if request.method == "POST":
+        guest_count = request.POST.get("guest_count")
+        price_per_plate = request.POST.get("price_per_plate")
+        GuestPricing.objects.create(package=pkg, guest_count=guest_count, price_per_plate=price_per_plate)
+        messages.success(request, "Guest pricing tier added successfully.")
+    return redirect("cms:package_detail", pk=package_id)
+
+@cms_login_required
+def guest_pricing_delete(request, id):
+    pricing = get_object_or_404(GuestPricing, id=id)
+    pkg_id = pricing.package.id
+    pricing.delete()
+    messages.success(request, "Guest pricing tier deleted successfully.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def bannar_feature_add(request, package_id):
+    pkg = get_object_or_404(CateringPackage, id=package_id)
+    if request.method == "POST":
+        name = request.POST.get("name")
+        if name:
+            BannarFeature.objects.create(package=pkg, name=name)
+            messages.success(request, "Banner highlight added.")
+    return redirect("cms:package_detail", pk=package_id)
+
+@cms_login_required
+def bannar_feature_delete(request, id):
+    feature = get_object_or_404(BannarFeature, id=id)
+    pkg_id = feature.package.id
+    feature.delete()
+    messages.success(request, "Banner highlight deleted.")
+    return redirect("cms:package_detail", pk=pkg_id)
+
+@cms_login_required
+def catering_feature_add(request, package_id):
+    pkg = get_object_or_404(CateringPackage, id=package_id)
+    if request.method == "POST":
+        name = request.POST.get("name")
+        if name:
+            CateringFeature.objects.create(package=pkg, name=name)
+            messages.success(request, "Catering feature added.")
+    return redirect("cms:package_detail", pk=package_id)
+
+@cms_login_required
+def catering_feature_delete(request, id):
+    feature = get_object_or_404(CateringFeature, id=id)
+    pkg_id = feature.package.id
+    feature.delete()
+    messages.success(request, "Catering feature deleted.")
+    return redirect("cms:package_detail", pk=pkg_id)
 
 def package_detail_view(request, pk):
     package = get_object_or_404(
@@ -1263,6 +1702,14 @@ def package_detail_view(request, pk):
                 BannarFeature.objects.create(package=package, name=tag_name)
                 messages.success(request, "Banner tag added.")
 
+        elif action == "edit_banner_tag":
+            tag = get_object_or_404(
+                BannarFeature, id=request.POST.get("tag_id"), package=package
+            )
+            tag.name = request.POST.get("tag_name")
+            tag.save()
+            messages.success(request, "Banner tag updated.")
+
         # 3. Add / Edit Guest Pricing
         elif action == "add_guest_pricing":
             GuestPricing.objects.create(
@@ -1321,19 +1768,33 @@ def package_detail_view(request, pk):
             cat.save()
             messages.success(request, "Category updated.")
 
-        # 6. Add Item
+        # 6. Add / Edit / Batch Add Items
         elif action == "add_item":
             cat = get_object_or_404(
                 MenuCategory,
                 id=request.POST.get("category_id"),
                 section__package=package,
             )
-            MenuItem.objects.create(
-                section=cat, name=request.POST.get("item_name")
+            item_names = request.POST.get("item_name", "")
+            # Support comma-separated or newline-separated items
+            names = [n.strip() for n in item_names.replace('\n', ',').split(',') if n.strip()]
+            for name in names:
+                MenuItem.objects.create(section=cat, name=name)
+            messages.success(request, f"{len(names)} item(s) added successfully.")
+
+        elif action == "edit_item":
+            item = get_object_or_404(
+                MenuItem,
+                id=request.POST.get("item_id"),
+                section__section__package=package,
             )
-            messages.success(request, "Item added.")
+            item.name = request.POST.get("item_name")
+            item.save()
+            messages.success(request, "Item updated.")
+
 
         return redirect("cms:package_detail", pk=package.pk)
+
 
     return render(
         request, "cms/caterings/package_detail.html", {"package": package}
@@ -1366,9 +1827,19 @@ def cms_gallery_view(request):
     if "delete_item" in request.GET:
         GalleryItem.objects.filter(id=request.GET.get("delete_item")).delete()
         messages.success(request, "Image deleted successfully!")
+        cat_param = request.GET.get("category")
+        if cat_param:
+            return redirect(f"{reverse('cms:gallery_dashboard')}?category={cat_param}")
         return redirect("cms:gallery_dashboard")
 
-    # 3. POST Requests (Add Category & Upload Images)
+    # 3. Category Filter Logic
+    selected_category = request.GET.get("category")
+    if selected_category:
+        items = items.filter(category_id=selected_category)
+
+    total_items_count = GalleryItem.objects.count()
+
+    # 4. POST Requests (Add Category & Upload Images)
     if request.method == "POST":
         action = request.POST.get("action_type")
 
@@ -1405,12 +1876,19 @@ def cms_gallery_view(request):
         elif action == "upload_images":
             category_id = request.POST.get("category_id")
             images = request.FILES.getlist("images")
+            title_input = request.POST.get("title", "").strip()
 
             if category_id and images:
                 category = get_object_or_404(GalleryCategory, id=category_id)
 
-                for img in images:
-                    GalleryItem.objects.create(category=category, image=img)
+                for index, img in enumerate(images, start=1):
+                    if title_input:
+                        img_title = f"{title_input} #{index}" if len(images) > 1 else title_input
+                    else:
+                        base_name = os.path.splitext(img.name)[0].replace("_", " ").replace("-", " ").title()
+                        img_title = base_name if base_name else f"{category.name} Photo"
+
+                    GalleryItem.objects.create(category=category, image=img, title=img_title)
 
                 messages.success(
                     request,
@@ -1423,9 +1901,21 @@ def cms_gallery_view(request):
 
         return redirect("cms:gallery_dashboard")
 
+    # Pagination for Gallery Items
+    paginator = Paginator(items.order_by("-id"), 12)
+    page = request.GET.get("page")
+    items = paginator.get_page(page)
+
     # Render Template
     return render(
-        request, "cms/gallery.html", {"categories": categories, "items": items}
+        request,
+        "cms/gallery.html",
+        {
+            "categories": categories,
+            "items": items,
+            "selected_category": selected_category,
+            "total_items_count": total_items_count,
+        },
     )
     
 def cms_login_view(request):
@@ -1434,21 +1924,30 @@ def cms_login_view(request):
         return redirect("cms:dashboard")
 
     if request.method == "POST":
-        username_input = request.POST.get("username")
-        password_input = request.POST.get("password")
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(request, username=username, password=password)
 
-        user = authenticate(
-            request, username=username_input, password=password_input
-        )
+            if user is not None:
+                if user.is_staff or user.is_superuser:
+                    auth_login(request, user)
+                    messages.success(
+                        request, f"Welcome back, {user.username}!"
+                    )
+                    return redirect("cms:dashboard")
+                else:
+                    messages.error(
+                        request,
+                        "Access Denied: You do not have CMS Admin privileges.",
+                    )
+            else:
+                messages.error(request, "Invalid username or password.")
+    else:
+        form = LoginForm()
 
-        if user is not None:
-            login(request, user)
-            messages.success(request, f"Welcome back, {user.username}!")
-            return redirect("cms:dashboard")
-        else:
-            messages.error(request, "Invalid username or password!")
-
-    return render(request, "cms/login.html")
+    return render(request, "cms/login.html", {"form": form})
 
 
 def cms_logout_view(request):
@@ -1457,7 +1956,109 @@ def cms_logout_view(request):
     return redirect('cms:login')
 
 
-# 3. CMS DASHBOARD (Protected)
-@login_required(login_url='cms:login')
+@cms_login_required
 def cms_dashboard(request):
-    return render(request, 'cms/dashboard.html')
+    return dashboard(request)
+
+
+
+def register_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Validation Checks
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match!')
+            return render(request, 'cms/register.html')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists!')
+            return render(request, 'cms/register.html')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email is already registered!')
+            return render(request, 'cms/register.html')
+
+        # Create user and hash password securely
+        user = User.objects.create_user(username=username, email=email, password=password)
+        user.save()
+
+        messages.success(request, 'Account created successfully! Please login.')
+        return redirect('cms:login')
+
+    return render(request, 'cms/register.html')
+
+
+@superadmin_required
+def admin_management(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        target_user_id = request.POST.get("user_id")
+        target_user = get_object_or_404(User, id=target_user_id)
+
+        if action == "assign_admin":
+            profile, created = AdminProfile.objects.get_or_create(user=target_user)
+            if profile.role not in ("developer", "superadmin"):
+                profile.role = "admin"
+                profile.assigned_by = request.user
+                profile.save()
+                messages.success(request, f"Assigned Admin role to '{target_user.username}'.")
+            else:
+                messages.warning(request, f"User '{target_user.username}' already has higher role ({profile.get_role_display()}).")
+
+        elif action == "revoke_admin":
+            if hasattr(target_user, "admin_profile"):
+                if target_user.admin_profile.role == "admin":
+                    target_user.admin_profile.delete()
+                    messages.success(request, f"Revoked Admin role from '{target_user.username}'.")
+                else:
+                    messages.error(request, "Superadmins cannot revoke Superadmin or Developer roles.")
+
+        return redirect("cms:admin_management")
+
+    admin_profiles_qs = AdminProfile.objects.select_related("user", "assigned_by").order_by("role", "-id")
+    paginator = Paginator(admin_profiles_qs, 10)
+    page = request.GET.get("page")
+    admin_profiles = paginator.get_page(page)
+
+    non_admin_users = User.objects.filter(admin_profile__isnull=True).order_by("username")
+
+    return render(request, "cms/admin_management.html", {
+        "admin_profiles": admin_profiles,
+        "non_admin_users": non_admin_users,
+    })
+
+
+@developer_required
+def developer_panel(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        target_user_id = request.POST.get("user_id")
+        new_role = request.POST.get("role", "admin")
+        target_user = get_object_or_404(User, id=target_user_id)
+
+        if action == "update_role":
+            profile, created = AdminProfile.objects.get_or_create(user=target_user)
+            profile.role = new_role
+            profile.assigned_by = request.user
+            profile.save()
+            messages.success(request, f"Updated role for '{target_user.username}' to {profile.get_role_display()}.")
+
+        elif action == "revoke_role":
+            if hasattr(target_user, "admin_profile"):
+                target_user.admin_profile.delete()
+                messages.success(request, f"Removed all CMS privileges from '{target_user.username}'.")
+
+        return redirect("cms:developer_panel")
+
+    all_users_qs = User.objects.select_related("admin_profile").order_by("-id")
+    paginator = Paginator(all_users_qs, 12)
+    page = request.GET.get("page")
+    all_users = paginator.get_page(page)
+
+    return render(request, "cms/developer_panel.html", {
+        "all_users": all_users,
+    })

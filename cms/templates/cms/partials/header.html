@@ -1,37 +1,27 @@
 <header class="topbar">
   <div class="topbar-left">
-    <button class="menu-btn" id="menuBtn"><i class="fa-solid fa-bars"></i></button>
-
-    <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass"></i>
-
-      <input type="text" placeholder="Search..." />
+    <button type="button" class="menu-btn" id="menuBtn" aria-label="Toggle navigation">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="topbar-brand">
+      <h2>Royal<span class="logo-accent">CMS</span></h2>
     </div>
   </div>
 
   <div class="topbar-right">
-    <button class="icon-btn">
-      <i class="fa-regular fa-bell"></i>
-
-      <span class="badge">3</span>
-    </button>
-
-    <button class="icon-btn">
-      <i class="fa-regular fa-envelope"></i>
-
-      <span class="badge">5</span>
-    </button>
+    <a href="{% url 'halls_list' %}" target="_blank" class="topbar-client-link" title="View Public Website">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      <span>Public Site</span>
+    </a>
 
     <div class="admin-profile">
-      <img src="https://i.pravatar.cc/150?img=12" alt="Admin" />
-
-      <div>
-        <h4>Admin</h4>
-
-        <span>Super Admin</span>
+      <div class="admin-avatar">
+        <i class="fa-solid fa-user-shield"></i>
       </div>
-
-      <i class="fa-solid fa-chevron-down"></i>
+      <div class="admin-info">
+        <h4>{% if user.is_authenticated %}{{ user.username|title }}{% else %}Admin{% endif %}</h4>
+        <span>Super Administrator</span>
+      </div>
     </div>
   </div>
 </header>

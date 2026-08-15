@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Hall Management
+  Hall Management - CMS
 {% endblock %}
 
 {% block extra_css %}
@@ -10,111 +10,172 @@
 {% endblock %}
 
 {% block content %}
-  <div class="page-header">
-    <div>
-      <h1>Hall Management</h1>
+  <div class="dashboard-container">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-hotel"></i> Hall Management</h1>
+        <p>Manage, add, and configure event halls and venue settings.</p>
+      </div>
 
-      <p>Manage all event halls</p>
-    </div>
-
-    <div class="header-actions">
-
-      <a href="{% url 'cms:hall_add' %}" class="add-btn">
-        <i class="fa-solid fa-plus"></i>
-
-        Add Hall
-      </a>
-    </div>
-  </div>
-  <div class="glass-card">
-    <div class="table-header">
-      <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
-
-        <input type="text" id="searchInput" placeholder="Search Hall..." />
+      <div class="header-actions">
+        <a href="{% url 'cms:hall_add' %}" class="btn-expo-primary">
+          <i class="fa-solid fa-plus"></i> Add Hall
+        </a>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="hall-table">
-        <thead>
-          <tr>
-            <th>Image</th>
+    <!-- HALL PAGE HERO BANNER SETTINGS CARD -->
+    <div class="banner-card">
+      <div class="banner-card-header">
+        <h3 class="banner-card-title">
+          <i class="fa-solid fa-image"></i> Halls Page Hero Banner Settings
+        </h3>
+        <span class="badge-pill">Hero Banner</span>
+      </div>
 
-            <th>Hall Name</th>
+      <form method="POST" enctype="multipart/form-data" class="banner-form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" value="update_hero">
 
-            <th>Capacity</th>
+        <div style="flex: 1; min-width: 160px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Badge Text</label>
+          <input type="text" name="hero_badge" value="{{ hall_page.hero_badge|default:'LUXURY VENUES' }}" required class="expo-input" placeholder="LUXURY VENUES">
+        </div>
 
-            <th>Price</th>
+        <div style="flex: 2; min-width: 220px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Title</label>
+          <input type="text" name="hero_title" value="{{ hall_page.hero_title|default:'Our Premium Banquet Halls' }}" required class="expo-input" placeholder="Enter hero title">
+        </div>
 
-            <th>Location</th>
+        <div style="flex: 3; min-width: 260px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Subtitle</label>
+          <input type="text" name="hero_subtitle" value="{{ hall_page.hero_subtitle|default:'Discover the perfect venue for your weddings, receptions, and corporate celebrations.' }}" required class="expo-input" placeholder="Enter hero subtitle">
+        </div>
 
-            <th>Featured</th>
+        <div style="flex: 2; min-width: 200px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Hero Image Banner</label>
+          <input type="file" name="hero_image" accept="image/*" style="font-size: 12px;">
+        </div>
 
-            <th>Status</th>
+        <div>
+          <button type="submit" class="btn-expo-primary">
+            <i class="fa-solid fa-save"></i> Save Banner
+          </button>
+        </div>
+      </form>
 
-            <th>Actions</th>
-          </tr>
-        </thead>
+      {% if hall_page.hero_image %}
+        <div class="banner-preview-bar">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="{{ hall_page.hero_image.url }}" alt="Hall Hero Banner Preview" class="banner-thumb" onclick="openFullImageModal('{{ hall_page.hero_image.url }}', 'Halls Hero Banner')">
+            <div>
+              <span style="display: block; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Halls Banner</span>
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">{{ hall_page.hero_title }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-expo-secondary btn-sm" onclick="openFullImageModal('{{ hall_page.hero_image.url }}', 'Halls Hero Banner')">
+            <i class="fa-solid fa-expand"></i> Preview Image
+          </button>
+        </div>
+      {% endif %}
+    </div>
 
-        <tbody>
-          {% for hall in halls %}
+    <!-- HALLS TABLE -->
+    <div class="expo-card">
+      <div class="table-header">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Search Hall..." />
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="hall-table">
+          <thead>
             <tr>
-              <td>
-                {% if hall.image %}
-                  <img src="{{ hall.image.url }}" class="hall-img" />
-                {% else %}
-                  <img src="{% static 'cms/images/no-image.png' %}" class="hall-img" />
-                {% endif %}
-              </td>
-
-              <td>
-                <strong>{{ hall.name }}</strong>
-              </td>
-
-              <td>{{ hall.capacity }}</td>
-
-              <td>₹ {{ hall.price }}</td>
-
-              <td>{{ hall.location }}</td>
-
-              <td>
-                {% if hall.is_featured %}
-                  <span class="badge featured">
-                    <i class="fa-solid fa-star"></i>
-
-                    Featured
-                  </span>
-                {% else %}
-                  <span class="badge normal">Normal</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if hall.is_active %}
-                  <span class="status active">Active</span>
-                {% else %}
-                  <span class="status inactive">Inactive</span>
-                {% endif %}
-              </td>
-
-              <td>
-                <div class="action-buttons">
-                  <a href="{% url 'cms:cms_hall_detail' hall.id %}" class="view-btn" title="View"><i class="fa-solid fa-eye"></i></a>
-
-                  {% comment %} <a href="{% url 'hall_edit' hall.id %}" class="edit-btn" title="Edit"><i class="fa-solid fa-pen"></i></a> {% endcomment %}
-
-                  {% comment %} <a href="{% url 'hall_delete' hall.id %}" class="delete-btn" onclick="return confirm('Delete this hall?')" title="Delete"><i class="fa-solid fa-trash"></i></a> {% endcomment %}
-                </div>
-              </td>
+              <th style="width: 90px;">Image</th>
+              <th>Hall Name</th>
+              <th>Capacity</th>
+              <th>Price</th>
+              <th>Location</th>
+              <th>Featured</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="8" class="empty-row">No Hall Found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {% for hall in halls %}
+              <tr>
+                <td>
+                  {% if hall.image %}
+                    <img src="{{ hall.image.url }}" class="hall-thumb" onclick="openFullImageModal('{{ hall.image.url }}', '{{ hall.name|escapejs }}')" onerror="this.src='{% static 'cms/images/placeholder.svg' %}'" title="Click to view full image" />
+                  {% else %}
+                    <img src="{% static 'cms/images/placeholder.svg' %}" class="hall-thumb" alt="Placeholder" />
+                  {% endif %}
+                </td>
+
+                <td style="font-weight: 600; color: var(--text-main);">
+                  {{ hall.name }}
+                </td>
+
+                <td>{{ hall.capacity }} Guests</td>
+
+                <td class="price-mono">₹ {{ hall.price }}</td>
+
+                <td>{{ hall.location }}</td>
+
+                <td>
+                  {% if hall.is_featured %}
+                    <span class="badge-expo badge-warning">
+                      <i class="fa-solid fa-star"></i> Featured
+                    </span>
+                  {% else %}
+                    <span class="badge-expo badge-draft">Normal</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <label class="toggle-switch">
+                    <input type="checkbox" {% if hall.is_active %}checked{% endif %} onchange="toggleVenueStatus('{% url 'cms:hall_toggle_status' hall.id %}', this)">
+                    <span class="slider round"></span>
+                  </label>
+                </td>
+
+                <td>
+                  <div class="actions-cell">
+                    <a href="{% url 'cms:cms_hall_detail' hall.id %}" class="action-btn-edit" title="View Detail">
+                      <i class="fa-solid fa-eye"></i> View
+                    </a>
+                    <a href="{% url 'cms:hall_edit' hall.id %}" class="action-btn-edit" title="Edit Hall">
+                      <i class="fa-solid fa-pen"></i> Edit
+                    </a>
+                    <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:hall_delete' hall.id %}', '{{ hall.name|escapejs }} Hall')" class="action-btn-delete" title="Delete Hall">
+                      <i class="fa-solid fa-trash"></i> Delete
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="empty-row">No halls registered yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
+  <script>
+    document.getElementById('searchInput')?.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      const rows = document.querySelectorAll('.hall-table tbody tr');
+      rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  </script>
 {% endblock %}

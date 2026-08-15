@@ -1,16 +1,19 @@
 from django.shortcuts import render,get_object_or_404
-from .models import CateringPackage
+from .models import CateringPackage, CateringPage
 
 # Create your views here.
 def catering(request):
+    catering_page, _ = CateringPage.objects.get_or_create(id=1)
     packages = CateringPackage.objects.filter(
         is_active=True
     )
 
     context = {
-        'packages': packages
+        'packages': packages,
+        'catering_page': catering_page
     }
-    return render(request, 'Caterers/catering.html', context)
+    return render(request, 'caterers/catering.html', context)
+
 
 def package_detail(request, slug):
     package = get_object_or_404(
@@ -18,7 +21,7 @@ def package_detail(request, slug):
         slug=slug
     )
     sections = package.sections.all().order_by(
-        'order'
+        'order', 'id'
     )
 
     context = {
@@ -26,4 +29,4 @@ def package_detail(request, slug):
         'sections': sections
     }
 
-    return render(request,'Caterers/package_detail.html', context)
+    return render(request, 'caterers/package_detail.html', context)

@@ -1,0 +1,119 @@
+{% extends "cms/base.html" %}
+{% load static %}
+
+{% block title %}Developer Panel | Royal CMS{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="page-header">
+        <div>
+            <h1><i class="fa-solid fa-code"></i> Developer Panel</h1>
+            <p>Full role management authority (Developer &gt; Superadmin &gt; Admin &gt; Public Customer).</p>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                <i class="fa-solid fa-circle-info"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Full User Role Assignment Matrix -->
+    <div class="expo-card">
+        <div class="expo-card-header">
+            <h2 class="expo-card-title"><i class="fa-solid fa-users"></i> System Accounts & Role Matrix</h2>
+            <span class="badge-pill">{{ all_users|length }} Accounts</span>
+        </div>
+        <div class="table-responsive">
+            <table class="cms-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Django Status</th>
+                        <th>Current CMS Role</th>
+                        <th>Update Role</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in all_users %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-main);">{{ u.username }}</td>
+                        <td>{{ u.email|default:"—" }}</td>
+                        <td>
+                            {% if u.is_superuser %}
+                                <span class="badge-status badge-confirmed"><i class="fa-solid fa-shield"></i> Superuser</span>
+                            {% elif u.is_staff %}
+                                <span class="badge-status badge-pending"><i class="fa-solid fa-user-gear"></i> Staff</span>
+                            {% else %}
+                                <span class="badge-status badge-draft"><i class="fa-solid fa-user"></i> Customer</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.admin_profile %}
+                                <span class="badge-status {% if u.admin_profile.role == 'developer' %}badge-confirmed{% elif u.admin_profile.role == 'superadmin' %}badge-pending{% else %}badge-draft{% endif %}" style="font-weight: 700;">
+                                    {{ u.admin_profile.get_role_display }}
+                                </span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 13px;">No CMS Role</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'cms:developer_panel' %}" style="display: flex; gap: 8px; align-items: center;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_role">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <select name="role" class="expo-input" style="height: 32px; padding: 4px 8px; font-size: 12px; width: 130px;">
+                                    <option value="admin" {% if u.admin_profile.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="superadmin" {% if u.admin_profile.role == 'superadmin' %}selected{% endif %}>Superadmin</option>
+                                    <option value="developer" {% if u.admin_profile.role == 'developer' %}selected{% endif %}>Developer</option>
+                                </select>
+                                <button type="submit" class="btn-expo-secondary btn-sm">Set Role</button>
+                            </form>
+                        </td>
+                        <td style="text-align: right;">
+                            {% if u.admin_profile %}
+                            <form method="POST" action="{% url 'cms:developer_panel' %}" style="display: inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="revoke_role">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="btn-expo-danger btn-sm" onclick="return confirm('Revoke all CMS privileges from {{ u.username }}?')">
+                                    <i class="fa-solid fa-user-xmark"></i> Strip Role
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if all_users.paginator.num_pages > 1 %}
+            <div class="expo-pagination">
+                <span class="pagination-info">
+                    Showing Page <strong>{{ all_users.number }}</strong> of <strong>{{ all_users.paginator.num_pages }}</strong> ({{ all_users.paginator.count }} total)
+                </span>
+
+                <div class="pagination-links">
+                    {% if all_users.has_previous %}
+                        <a href="?page={{ all_users.previous_page_number }}">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </a>
+                    {% endif %}
+
+                    {% if all_users.has_next %}
+                        <a href="?page={{ all_users.next_page_number }}">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

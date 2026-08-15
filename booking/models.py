@@ -42,6 +42,10 @@ class Booking(models.Model):
         default=0
     )
 
+    total_guest = models.PositiveIntegerField(
+        default=100
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -170,7 +174,7 @@ class BookingRoom(models.Model):
     )
 
     def __str__(self):
-        return f"{self.booking.customer_name} - {self.room.name}"
+        return f"{self.booking.customer.name} - {self.room.name}"
     
 class BookingCatering(models.Model):
 
@@ -198,7 +202,7 @@ class BookingCatering(models.Model):
     )
 
     def __str__(self):
-        return f"{self.booking.customer_name} - {self.package.name}"
+        return f"{self.booking.customer.name} - {self.package.name}"
     
 class BookingMenuItem(models.Model):
 

@@ -5,99 +5,130 @@
     <!-- ================= LOGO ================= -->
     <a href="/" class="logo">
       <img src="{% static 'assets/logo1.png' %}" alt="Logo" />
-      {% comment %} <div class="logo-text">
-        <h2>Royal Palace</h2>
-        <span>Event Management</span>
-      </div> {% endcomment %}
     </a>
+
+    <!-- CSS-only mobile nav toggle checkbox & Backdrop -->
+    <input type="checkbox" id="nav-check" class="nav-check-input" hidden>
+    <div class="nav-backdrop" id="navBackdrop"></div>
 
     <!-- ================= MENU ================= -->
 
     <ul class="nav-menu" id="navMenu">
+      <li class="mobile-drawer-header">
+        <span class="drawer-title">Menu</span>
+        <label for="nav-check" class="menu-close-btn" title="Close Menu">&times;</label>
+      </li>
       <li>
-        <a href="/" class="active">Home</a>
+        <a href="/" class="{% if request.resolver_match.url_name == 'index' or request.path == '/' %}active{% endif %}">Home</a>
       </li>
 
       <li>
-        <a href="{% url 'about_us' %}">About Us</a>
+        <a href="{% url 'about_us' %}" class="{% if request.resolver_match.url_name == 'about_us' or '/about_us/' in request.path %}active{% endif %}">About Us</a>
       </li>
 
-      <!-- SERVICES -->
-
+      <!-- SERVICES DROPDOWN -->
       <li class="dropdown">
-        <a href="#">
-          Services
-
-          <i class="fa-solid fa-chevron-down"></i>
+        <a href="javascript:void(0)" class="dropdown-trigger {% if request.resolver_match.url_name in 'halls_list hall_detail room catering package_detail' or '/halls/' in request.path or '/room/' in request.path or '/catering/' in request.path %}active{% endif %}" role="button" aria-expanded="false">
+          <span>Services</span>
+          <i class="fa-solid fa-chevron-down ms-1"></i>
         </a>
 
-        <ul class="dropdown-menu">
-          <li>
-            <a href="#">
-              <i class="fa-solid fa-building"></i>
+        <div class="dropdown-panel">
+          <div class="dropdown-grid">
+            <div class="dropdown-col">
+              <span class="dropdown-col-title">CORE SERVICES</span>
+              <a href="{% url 'halls_list' %}" class="dropdown-item {% if request.resolver_match.url_name in 'halls_list hall_detail' or '/halls/' in request.path %}active-item{% endif %}">
+                <div class="item-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div>
+                  <strong>Banquet Halls</strong>
+                  <small>Luxury venues for grand celebrations</small>
+                </div>
+              </a>
 
-              Halls
-            </a>
+              <a href="{% url 'room' %}" class="dropdown-item {% if request.resolver_match.url_name == 'room' or '/room/' in request.path %}active-item{% endif %}">
+                <div class="item-icon"><i class="fa-solid fa-bed"></i></div>
+                <div>
+                  <strong>Bride & Groom Rooms</strong>
+                  <small>Luxury stay for family & guests</small>
+                </div>
+              </a>
 
-            <ul class="sub-dropdown">
-              {% for hall in hall_menu %}
-                <li>
-                  <a href="{% url 'hall_detail' hall.slug %}">{{ hall.name }}</a>
-                </li>
-              {% empty %}
-                <li>
-                  <a href="#">No Hall Available</a>
-                </li>
-              {% endfor %}
-            </ul>
-          </li>
+              <a href="{% url 'catering' %}" class="dropdown-item {% if request.resolver_match.url_name in 'catering package_detail' or '/catering/' in request.path %}active-item{% endif %}">
+                <div class="item-icon"><i class="fa-solid fa-utensils"></i></div>
+                <div>
+                  <strong>Catering Packages</strong>
+                  <small>Gourmet menus for every event</small>
+                </div>
+              </a>
+            </div>
 
-          <li>
-            <a href="{% url 'room' %}">
-              <i class="fa-solid fa-bed"></i>
-
-              Rooms
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'catering' %}">
-              <i class="fa-solid fa-utensils"></i>
-
-              Catering
-            </a>
-          </li>
-        </ul>
+            <div class="dropdown-col">
+              <span class="dropdown-col-title">FEATURED VENUES</span>
+              <div class="venue-links">
+                {% for hall in hall_menu %}
+                  <a href="{% url 'hall_detail' hall.slug %}" class="venue-item">
+                    <i class="fa-solid fa-angle-right"></i> {{ hall.name }}
+                  </a>
+                {% empty %}
+                  <span class="venue-item text-muted">No halls available</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
       </li>
 
       <li>
-        <<a href="{% url 'cms:gallery_frontend' %}">Gallery</a>
+        <a href="{% url 'cms:gallery_frontend' %}" class="{% if request.resolver_match.url_name == 'gallery_frontend' or '/cms/gallery/' in request.path or '/gallery/' in request.path %}active{% endif %}">Gallery</a>
       </li>
 
       <li>
-        <a href="#">Contact</a>
+        <a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' or '/contact/' in request.path %}active{% endif %}">Contact</a>
       </li>
     </ul>
 
     <!-- ================= RIGHT SIDE ================= -->
 
     <div class="nav-right">
-      <a href="{% url 'cart' %}" class="cart-btn"><i class="fa-solid fa-cart-shopping"></i></a>
+      <a href="javascript:void(0)" onclick="openCartSidebar()" class="cart-btn" title="View Event Cart">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span>Cart (<strong id="headerCartCount">0</strong>)</span>
+      </a>
 
-      {% comment %} <a href="#" class="quote-btn">Get Quote</a> {% endcomment %}
-      <div class="d-flex align-items-center gap-2">
-        <!-- Existing Buttons (like Cart, Get Quote) -->
+      {% if user.is_authenticated %}
+        <div class="user-menu-dropdown">
+          <button type="button" class="user-menu-btn">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>{{ user.first_name|default:user.username }}</span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 11px;"></i>
+          </button>
+          <div class="user-dropdown-panel">
+            <a href="{% url 'accounts:profile' %}"><i class="fa-solid fa-user"></i> My Profile</a>
+            <a href="{% url 'accounts:my_bookings' %}"><i class="fa-solid fa-calendar-check"></i> My Bookings</a>
+            {% if is_admin_authenticated or user.is_staff or user.is_superuser or is_admin or is_superadmin or is_developer or is_cms_user or user.admin_profile %}
+              <a href="{% url 'cms:dashboard' %}"><i class="fa-solid fa-gauge-high"></i> CMS Dashboard</a>
+            {% endif %}
+            <div class="user-dropdown-divider"></div>
+            <a href="{% url 'accounts:user_logout' %}" style="color: #dc2626;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+          </div>
+        </div>
+      {% else %}
+        {% if is_admin_authenticated %}
+          <a href="{% url 'cms:dashboard' %}" class="btn-user-login" style="background: #171717; color: #ffffff; border-color: #171717;" title="Active Admin Session">
+            <i class="fa-solid fa-shield-halved"></i> CMS
+          </a>
+        {% endif %}
+        <div class="d-flex align-items-center gap-2">
+          <a href="{% url 'accounts:user_login' %}" class="btn-user-login">Login</a>
+          <a href="{% url 'accounts:register' %}" class="btn-user-register">Register</a>
+        </div>
+      {% endif %}
 
-        <!-- Admin / CMS Login Button -->
-        <a href="{% url 'cms:login' %}" class="btn btn-outline-dark rounded-pill px-3 py-2 small fw-bold quote-btn"><i class="fas fa-user-shield me-1"></i> Admin Login</a>
-      </div>
 
-      <div class="menu-toggle" id="menuToggle">
+      <label for="nav-check" class="menu-toggle" id="menuToggle">
         <i class="fa-solid fa-bars"></i>
-      </div>
-
+      </label>
     </div>
 
-    <!-- Main Website Header / Navbar -->
   </nav>
 </header>

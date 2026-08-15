@@ -2,180 +2,96 @@
 {% load static %}
 
 {% block title %}
-Booking Edit
+  Edit Booking #BK-{{ booking.id }} - Royal CMS
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'cms/css/booking_edit.css' %}">
+  <link rel="stylesheet" href="{% static 'cms/css/booking_edit.css' %}" />
 {% endblock %}
 
 {% block content %}
+  <div class="dashboard-container">
+    <div class="page-header">
+      <div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--expo-text-main);"><i class="fa-solid fa-pen-to-square"></i> Edit Booking #BK-{{ booking.id }}</h1>
+        <p style="margin: 4px 0 0 0; color: var(--expo-text-muted); font-size: 14px;">Update reservation details and customer contact information.</p>
+      </div>
 
-<div class="page-header">
+      <a href="{% url 'cms:booking_detail' booking.id %}" class="btn-expo-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Back
+      </a>
+    </div>
 
-    <h1>Edit Booking</h1>
+    <form method="POST" class="booking-form">
+      {% csrf_token %}
 
-    <a href="{% url 'cms:booking_detail' booking.id %}" class="back-btn">
-
-        <i class="fa-solid fa-arrow-left"></i>
-
-        Back
-
-    </a>
-
-</div>
-
-<form method="POST" class="booking-form">
-
-    {% csrf_token %}
-
-    <div class="glass-card">
-
+      <div class="expo-card">
         <h2>Customer Details</h2>
 
         <div class="grid-2">
+          <div class="form-group">
+            <label>Customer Name</label>
+            <input type="text" name="customer_name" value="{{ booking.customer.name }}" required />
+          </div>
 
-            <div class="form-group">
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" name="customer_phone" value="{{ booking.customer.phone }}" required />
+          </div>
 
-                <label>Name</label>
-
-                <input
-                    type="text"
-                    name="customer_name"
-                    value="{{ booking.customer.name }}"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Phone</label>
-
-                <input
-                    type="text"
-                    name="customer_phone"
-                    value="{{ booking.customer.phone }}"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group full">
-
-                <label>Email</label>
-
-                <input
-                    type="email"
-                    name="customer_email"
-                    value="{{ booking.customer.email }}"
-                >
-
-            </div>
-
+          <div class="form-group full">
+            <label>Email Address</label>
+            <input type="email" name="customer_email" value="{{ booking.customer.email }}" />
+          </div>
         </div>
+      </div>
 
-    </div>
-        <div class="glass-card">
-
+      <div class="expo-card">
         <h2>Booking Details</h2>
 
         <div class="grid-2">
+          <div class="form-group">
+            <label>Event Type</label>
+            <select name="event_type">
+              <option value="Wedding" {% if booking.event_type == 'Wedding' %}selected{% endif %}>Wedding</option>
+              <option value="Reception" {% if booking.event_type == 'Reception' %}selected{% endif %}>Reception</option>
+              <option value="Birthday" {% if booking.event_type == 'Birthday' %}selected{% endif %}>Birthday</option>
+              <option value="Engagement" {% if booking.event_type == 'Engagement' %}selected{% endif %}>Engagement</option>
+              <option value="Corporate" {% if booking.event_type == 'Corporate' %}selected{% endif %}>Corporate</option>
+              <option value="Anniversary" {% if booking.event_type == 'Anniversary' %}selected{% endif %}>Anniversary</option>
+            </select>
+          </div>
 
-            <div class="form-group">
+          <div class="form-group">
+            <label>Event Date</label>
+            <input type="date" name="event_date" value="{{ booking.event_date|date:'Y-m-d' }}" required />
+          </div>
 
-                <label>Event Type</label>
+          <div class="form-group">
+            <label>Booking Status</label>
+            <select name="status">
+              <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+              <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
 
-                <select name="event_type">
-
-                    <option value="Wedding" {% if booking.event_type == "Wedding" %}selected{% endif %}>Wedding</option>
-
-                    <option value="Reception" {% if booking.event_type == "Reception" %}selected{% endif %}>Reception</option>
-
-                    <option value="Birthday" {% if booking.event_type == "Birthday" %}selected{% endif %}>Birthday</option>
-
-                    <option value="Engagement" {% if booking.event_type == "Engagement" %}selected{% endif %}>Engagement</option>
-
-                    <option value="Corporate" {% if booking.event_type == "Corporate" %}selected{% endif %}>Corporate</option>
-
-                    <option value="Anniversary" {% if booking.event_type == "Anniversary" %}selected{% endif %}>Anniversary</option>
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Event Date</label>
-
-                <input
-                    type="date"
-                    name="event_date"
-                    value="{{ booking.event_date|date:'Y-m-d' }}"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Booking Status</label>
-
-                <select name="status">
-
-                    <option value="pending"
-                        {% if booking.status == "pending" %}selected{% endif %}>
-                        Pending
-                    </option>
-
-                    <option value="confirmed"
-                        {% if booking.status == "confirmed" %}selected{% endif %}>
-                        Confirmed
-                    </option>
-
-                    <option value="cancelled"
-                        {% if booking.status == "cancelled" %}selected{% endif %}>
-                        Cancelled
-                    </option>
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Total Amount</label>
-
-                <input
-                    type="text"
-                    value="₹ {{ booking.total_amount }}"
-                    readonly
-                >
-
-            </div>
-
+          <div class="form-group">
+            <label>Total Amount</label>
+            <input type="text" value="₹ {{ booking.total_amount|floatformat:2 }}" readonly class="price-mono" />
+          </div>
         </div>
+      </div>
 
-    </div>
-
-    <div class="button-group">
-
-        <button type="submit" class="save-btn">
-
-            <i class="fa-solid fa-floppy-disk"></i>
-
-            Save Changes
-
+      <div class="button-group">
+        <button type="submit" class="btn-expo-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Save Changes
         </button>
 
-        <a href="{% url 'cms:booking_detail' booking.id %}" class="cancel-btn">
-
-            Cancel
-
+        <a href="{% url 'cms:booking_detail' booking.id %}" class="btn-expo-secondary">
+          Cancel
         </a>
-
-    </div>
-
-</form>
-
+      </div>
+    </form>
+  </div>
 {% endblock %}

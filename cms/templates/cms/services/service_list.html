@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Services Design Management
+  Services Management - CMS
 {% endblock %}
 
 {% block extra_css %}
@@ -10,78 +10,106 @@
 {% endblock %}
 
 {% block content %}
-  <div class="cms-container">
-    <div class="page-header" style="margin-bottom: 24px;">
-      <h1><i class="fa-solid fa-concierge-bell"></i> Services Management</h1>
-      <p style="color: #64748b;">Manage service categories and prices across all halls.</p>
+  <div class="dashboard-container">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-concierge-bell"></i> Services Management</h1>
+        <p>Manage service categories, add-on options, and pricing across all halls.</p>
+      </div>
     </div>
 
+    <!-- Top Search Header -->
+    <div class="table-header">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search Service..." />
+      </div>
+    </div>
+
+    <!-- HALLS LIST -->
     {% for hall in halls %}
-      <div class="glass-card" style="margin-bottom: 30px; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <div class="srv-hall-card hall-service-section">
         <!-- HALL HEADER & ADD CATEGORY BUTTON -->
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9; margin-bottom: 20px;">
-          <h2 style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">
-            <i class="fa-solid fa-building" style="color: #2563eb; margin-right: 8px;"></i>
+        <div class="srv-hall-header">
+          <h2 class="srv-hall-title">
+            <i class="fa-solid fa-hotel" style="color: var(--text-muted);"></i>
             {{ hall.name }}
           </h2>
 
-          <button type="button" class="save-btn" onclick="openAddServiceCatModal('{{ hall.id }}')"><i class="fa-solid fa-folder-plus"></i> Add Category</button>
+          <button type="button" class="btn-expo-primary btn-sm" onclick="openAddServiceCatModal('{{ hall.id }}')">
+            <i class="fa-solid fa-folder-plus"></i> Add Service Category
+          </button>
         </div>
 
         <!-- CATEGORIES IN THIS HALL -->
         {% for category in hall.service_categories.all %}
-          <div class="category-box" style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <h3 style="font-size: 1.05rem; font-weight: 600; margin: 0; color: #334155;">
+          <div class="srv-cat-box service-category-box">
+            <div class="srv-cat-header">
+              <h3 class="srv-cat-title">
+                <i class="fa-solid fa-layer-group" style="color: var(--text-muted);"></i>
                 {{ category.name }}
                 {% if category.subtitle %}
-                  <small style="font-size: 0.85rem; color: #64748b; font-weight: normal;">({{ category.subtitle }})</small>
+                  <small style="font-size: 13px; color: var(--text-muted); font-weight: normal;">({{ category.subtitle }})</small>
                 {% endif %}
 
                 <!-- DELETE CATEGORY -->
-                <a href="{% url 'cms:service_category_delete' category.id %}" style="color: #dc2626; margin-left: 10px; font-size: 0.85rem;" onclick="return confirm('Is category ke saare services delete ho jayenge. Delete karein?')"><i class="fa-solid fa-trash"></i></a>
+                <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:service_category_delete' category.id %}', '{{ category.name|escapejs }} Category')" style="color: #dc2626; margin-left: 8px; font-size: 13px;" title="Delete Category">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
               </h3>
 
-              <!-- ADD SERVICE ITEM BUTTON -->
-              <button type="button" class="small-add-btn" onclick="openAddServiceModal('{{ category.id }}')"><i class="fa-solid fa-plus"></i> Add Service Item</button>
+              <!-- Add Service Item Button -->
+              <button type="button" class="btn-expo-secondary btn-sm" onclick="openAddServiceModal('{{ category.id }}', '{{ category.name|escapejs }}')">
+                <i class="fa-solid fa-plus"></i> Add Service Item
+              </button>
             </div>
 
-            <!-- SERVICES TABLE -->
-            <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-              <thead>
-                <tr style="text-align: left; border-bottom: 1px solid #cbd5e1; color: #64748b; font-size: 0.85rem;">
-                  <th style="padding: 8px;">Service Item</th>
-                  <th style="padding: 8px;">Price</th>
-                  <th style="padding: 8px; width: 120px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for service in category.services.all %}
-                  <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 10px 8px; font-weight: 500;">{{ service.name }}</td>
-                    <td style="padding: 10px 8px; color: #16a34a; font-weight: 600;">₹ {{ service.price }}</td>
-                    <td style="padding: 10px 8px;">
-                      <!-- EDIT BUTTON -->
-                      <button type="button" class="edit-btn" onclick="editService('{{ service.id }}', '{{ service.name|escapejs }}', '{{ service.price }}')"><i class="fa-solid fa-pen"></i></button>
-
-                      <!-- DELETE BUTTON -->
-                      <a href="{% url 'cms:service_delete' service.id %}" class="delete-btn" onclick="return confirm('Is service ko delete karein?')"><i class="fa-solid fa-trash"></i></a>
-                    </td>
-                  </tr>
-                {% empty %}
+            <div class="table-responsive">
+              <table class="srv-table">
+                <thead>
                   <tr>
-                    <td colspan="3" style="text-align: center; padding: 12px; color: #94a3b8; font-size: 0.9rem;">No services in this category yet.</td>
+                    <th>Service Name</th>
+                    <th>Price</th>
+                    <th style="width: 130px; text-align: right;">Actions</th>
                   </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% for service in category.services.all %}
+                    <tr class="service-row">
+                      <td style="font-weight: 600; color: var(--text-main);" class="service-name-cell">{{ service.name }}</td>
+                      <td class="price-mono">₹ {{ service.price }}</td>
+                      <td>
+                        <div class="actions-cell">
+                          <button class="action-btn-edit" type="button" onclick="editService('{{ service.id }}', '{{ service.name|escapejs }}', '{{ service.price }}')" title="Edit Service">
+                            <i class="fa-solid fa-pen"></i> Edit
+                          </button>
+                          <a href="javascript:void(0)" onclick="confirmExpoDelete('{% url 'cms:service_delete' service.id %}', '{{ service.name|escapejs }} Service')" class="action-btn-delete" title="Delete Service">
+                            <i class="fa-solid fa-trash"></i> Delete
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="3" style="text-align: center; padding: 18px; color: var(--text-muted);">
+                        No service items in this category yet. Click "+ Add Service Item" to create one.
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
         {% empty %}
-          <p style="color: #94a3b8; font-style: italic; padding: 10px 0;">No Service Categories added for {{ hall.name }}.</p>
+          <p style="color: var(--text-muted); text-align: center; padding: 16px 0;">No service categories added for {{ hall.name }} yet. Click "+ Add Service Category" to start.</p>
         {% endfor %}
       </div>
     {% empty %}
-      <p>No Halls Found.</p>
+      <div class="srv-hall-card" style="text-align: center; padding: 48px; color: var(--text-muted);">
+        <i class="fa-solid fa-hotel" style="font-size: 32px; margin-bottom: 12px; color: var(--text-muted);"></i>
+        <p>No halls found. Please create a banquet hall first.</p>
+      </div>
     {% endfor %}
   </div>
 
@@ -89,25 +117,25 @@
 
   <!-- 1. ADD SERVICE CATEGORY MODAL -->
   <div id="addServiceCatModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>Add Service Category</h2>
+        <h2><i class="fa-solid fa-folder-plus"></i> Add Service Category</h2>
         <span class="close-btn" onclick="closeAddServiceCatModal()">&times;</span>
       </div>
       <form action="{% url 'cms:service_category_add' %}" method="POST">
         {% csrf_token %}
         <input type="hidden" id="service_cat_hall_id" name="hall_id" />
         <div class="form-group">
-          <label>Category Name (e.g. Catering, Decoration)</label>
-          <input type="text" name="name" required placeholder="Enter category name" />
+          <label>Category Name *</label>
+          <input type="text" name="name" required class="form-control" placeholder="e.g. Welcome Drinks, Sound & Lighting, Valet Parking" />
         </div>
         <div class="form-group">
           <label>Subtitle (Optional)</label>
-          <input type="text" name="subtitle" placeholder="e.g. Vegetarian / Non-Veg options" />
+          <input type="text" name="subtitle" class="form-control" placeholder="e.g. Premium DJ & Sound Setup" />
         </div>
         <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeAddServiceCatModal()">Cancel</button>
-          <button type="submit" class="save-btn">Create Category</button>
+          <button type="button" class="btn-expo-secondary" onclick="closeAddServiceCatModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-plus"></i> Create Category</button>
         </div>
       </form>
     </div>
@@ -115,25 +143,25 @@
 
   <!-- 2. ADD SERVICE ITEM MODAL -->
   <div id="addServiceModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>Add New Service Item</h2>
+        <h2><i class="fa-solid fa-plus"></i> Add Service Item to <span id="modal_service_cat_name"></span></h2>
         <span class="close-btn" onclick="closeAddServiceModal()">&times;</span>
       </div>
       <form action="{% url 'cms:service_add' %}" method="POST">
         {% csrf_token %}
-        <input type="hidden" id="add_service_cat_id" name="category_id" />
+        <input type="hidden" id="service_cat_id" name="category_id" />
         <div class="form-group">
-          <label>Service Name</label>
-          <input type="text" name="name" required placeholder="Enter service name" />
+          <label>Service Name *</label>
+          <input type="text" name="name" required class="form-control" placeholder="e.g. Live Shehnai Troupe, Fog Entry" />
         </div>
         <div class="form-group">
-          <label>Price</label>
-          <input type="number" step="0.01" name="price" placeholder="0.00" required />
+          <label>Price (₹) *</label>
+          <input type="number" step="0.01" name="price" required class="form-control" placeholder="5000.00" />
         </div>
         <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeAddServiceModal()">Cancel</button>
-          <button type="submit" class="save-btn">Add Service</button>
+          <button type="button" class="btn-expo-secondary" onclick="closeAddServiceModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-plus"></i> Add Service</button>
         </div>
       </form>
     </div>
@@ -141,83 +169,70 @@
 
   <!-- 3. EDIT SERVICE ITEM MODAL -->
   <div id="editServiceModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>Edit Service Item</h2>
+        <h2><i class="fa-solid fa-pen"></i> Edit Service Item</h2>
         <span class="close-btn" onclick="closeEditServiceModal()">&times;</span>
       </div>
       <form id="editServiceForm" method="POST">
         {% csrf_token %}
         <div class="form-group">
-          <label>Service Name</label>
-          <input type="text" id="edit_service_name" name="name" required />
+          <label>Service Name *</label>
+          <input type="text" id="edit_service_name" name="name" required class="form-control" />
         </div>
         <div class="form-group">
-          <label>Price</label>
-          <input type="number" step="0.01" id="edit_service_price" name="price" required />
+          <label>Price (₹) *</label>
+          <input type="number" step="0.01" id="edit_service_price" name="price" required class="form-control" />
         </div>
         <div class="modal-footer">
-          <button type="button" class="cancel-btn" onclick="closeEditServiceModal()">Cancel</button>
-          <button type="submit" class="save-btn">Save Changes</button>
+          <button type="button" class="btn-expo-secondary" onclick="closeEditServiceModal()">Cancel</button>
+          <button type="submit" class="btn-expo-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT ================= -->
   <script>
     function openAddServiceCatModal(hallId) {
-      var hallInput = document.getElementById('service_cat_hall_id')
-      var modal = document.getElementById('addServiceCatModal')
-      if (hallInput && modal) {
-        hallInput.value = hallId
-        modal.style.setProperty('display', 'flex', 'important')
-      }
+      document.getElementById('service_cat_hall_id').value = hallId;
+      document.getElementById('addServiceCatModal').style.display = 'flex';
     }
-    
     function closeAddServiceCatModal() {
-      var modal = document.getElementById('addServiceCatModal')
-      if (modal) modal.style.display = 'none'
+      document.getElementById('addServiceCatModal').style.display = 'none';
     }
-    
-    function openAddServiceModal(catId) {
-      var catInput = document.getElementById('add_service_cat_id')
-      var modal = document.getElementById('addServiceModal')
-      if (catInput && modal) {
-        catInput.value = catId
-        modal.style.setProperty('display', 'flex', 'important')
-      }
+
+    function openAddServiceModal(categoryId, categoryName) {
+      document.getElementById('service_cat_id').value = categoryId;
+      document.getElementById('modal_service_cat_name').textContent = categoryName;
+      document.getElementById('addServiceModal').style.display = 'flex';
     }
-    
     function closeAddServiceModal() {
-      var modal = document.getElementById('addServiceModal')
-      if (modal) modal.style.display = 'none'
+      document.getElementById('addServiceModal').style.display = 'none';
     }
-    
+
     function editService(id, name, price) {
-      var modal = document.getElementById('editServiceModal')
-      var form = document.getElementById('editServiceForm')
-      if (modal && form) {
-        document.getElementById('edit_service_name').value = name
-        document.getElementById('edit_service_price').value = price
-        form.action = '/cms/service/edit/' + id + '/'
-        modal.style.setProperty('display', 'flex', 'important')
-      }
+      document.getElementById('editServiceForm').action = '/cms/service/edit/' + id + '/';
+      document.getElementById('edit_service_name').value = name;
+      document.getElementById('edit_service_price').value = price;
+      document.getElementById('editServiceModal').style.display = 'flex';
     }
-    
     function closeEditServiceModal() {
-      var modal = document.getElementById('editServiceModal')
-      if (modal) modal.style.display = 'none'
+      document.getElementById('editServiceModal').style.display = 'none';
     }
-    
-    window.addEventListener('click', function (e) {
-      var catModal = document.getElementById('addServiceCatModal')
-      var addModal = document.getElementById('addServiceModal')
-      var editModal = document.getElementById('editServiceModal')
-    
-      if (e.target === catModal) catModal.style.display = 'none'
-      if (e.target === addModal) addModal.style.display = 'none'
-      if (e.target === editModal) editModal.style.display = 'none'
-    })
+
+    // Live search filter across services
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+          const val = this.value.toLowerCase().trim();
+          const rows = document.querySelectorAll('.service-row');
+          rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
+          });
+        });
+      }
+    });
   </script>
 {% endblock %}

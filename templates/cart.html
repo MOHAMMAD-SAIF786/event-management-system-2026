@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-Add to cart | RoyalEvents
+Event Cart | Royal Events
 {% endblock %}
 
 {% block extra_css %}
@@ -11,206 +11,248 @@ Add to cart | RoyalEvents
 
 {% block content %}
 <section class="cart-hero">
-
     <div class="cart-overlay">
-
         <span class="cart-badge">
             🛒 Event Cart
         </span>
-
         <h1>Review Your Booking</h1>
-
-        <p>
-            Check all selected services before proceeding
-        </p>
-
+        <p>Check all selected services before proceeding to final booking</p>
     </div>
-
 </section>
 
 <section class="cart-section">
-
     <div class="cart-container">
-
-        <!-- LEFT SIDE -->
-
-        <div class="cart-left">
-
-            <!-- HALL -->
-
-            <div class="cart-card">
-
-                <h2>🏛 Hall Details</h2>
-
-                <div class="item-row">
-
-                    <div>
-
-                        <h3>Diamond Banquet</h3>
-
-                        <p>Capacity : 500 Guests</p>
-
-                    </div>
-
-                    <span>₹50,000</span>
-
-                </div>
-
-            </div>
-
-            <!-- ROOM -->
-
-            <div class="cart-card">
-
-                <h2>🛏 Room Details</h2>
-
-                <div class="item-row">
-
-                    <div>
-
-                        <h3>Bridal Suite</h3>
-
-                        <p>1 Room</p>
-
-                    </div>
-
-                    <span>₹5,000</span>
-
-                </div>
-
-                <div class="item-row">
-
-                    <div>
-
-                        <h3>Family Room</h3>
-
-                        <p>2 Rooms</p>
-
-                    </div>
-
-                    <span>₹7,000</span>
-
-                </div>
-
-            </div>
-
-            <!-- CATERING -->
-
-            <div class="cart-card">
-
-                <h2>🍽 Catering Package</h2>
-
-                <div class="item-row">
-
-                    <div>
-
-                        <h3>Premium Package</h3>
-
-                        <p>200 Guests</p>
-
-                    </div>
-
-                    <span>₹2,00,000</span>
-
-                </div>
-
-            </div>
-
-            <!-- EXTRAS -->
-
-            <div class="cart-card">
-
-                <h2>🎵 Additional Services</h2>
-
-                <div class="item-row">
-
-                    <div>DJ Setup</div>
-
-                    <span>₹15,000</span>
-
-                </div>
-
-                <div class="item-row">
-
-                    <div>Photography</div>
-
-                    <span>₹20,000</span>
-
-                </div>
-
-                <div class="item-row">
-
-                    <div>VIP Sofa</div>
-
-                    <span>₹5,000</span>
-
-                </div>
-
-            </div>
-
+        <!-- LEFT SIDE: DYNAMIC CARDS -->
+        <div class="cart-left" id="cartLeftContainer">
+            <!-- Rendered by JS -->
         </div>
-        <!-- RIGHT SIDE -->
 
+        <!-- RIGHT SIDE: SUMMARY -->
         <div class="cart-right">
-
-            <div class="summary-card">
-
-                <h2>Booking Summary</h2>
-
-                <div class="summary-row">
-
-                    <span>Hall Cost</span>
-
-                    <span>₹50,000</span>
-
-                </div>
-
-                <div class="summary-row">
-
-                    <span>Room Cost</span>
-
-                    <span>₹12,000</span>
-
-                </div>
-
-                <div class="summary-row">
-
-                    <span>Catering Cost</span>
-
-                    <span>₹2,00,000</span>
-
-                </div>
-
-                <div class="summary-row">
-
-                    <span>Extra Services</span>
-
-                    <span>₹40,000</span>
-
-                </div>
-
-                <hr>
-
-                <div class="summary-row total-row">
-
-                    <span>Total Amount</span>
-
-                    <span>₹3,02,000</span>
-
-                </div>
-
-                <a href="{% url 'quotation' %}" class="quote-btn">
-                    📄 Generate Quotation
-                </a>
-
-                <a href="#" class="booking-btn">
-                    ✅ Continue Booking
-                </a>
-
+            <div class="summary-card" id="cartSummaryContainer">
+                <!-- Rendered by JS -->
             </div>
-
         </div>
-
     </div>
 </section>
 {% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    renderFullCartPage();
+});
+
+function renderFullCartPage() {
+    const cart = RoyalCart.get();
+    const leftContainer = document.getElementById("cartLeftContainer");
+    const summaryContainer = document.getElementById("cartSummaryContainer");
+
+    if (!leftContainer || !summaryContainer) return;
+
+    if (RoyalCart.getTotalCount() === 0) {
+        leftContainer.innerHTML = `
+            <div class="cart-card" style="text-align: center; padding: 48px;">
+                <i class="fa-solid fa-cart-shopping" style="font-size: 48px; color: #dcdee0; margin-bottom: 16px;"></i>
+                <h2>Your Cart is Empty</h2>
+                <p style="color: #60646c; margin-top: 8px;">Explore our halls, rooms, and catering packages to build your event.</p>
+                <a href="/" style="display: inline-block; margin-top: 20px; background: #000000; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500;">Browse Services</a>
+            </div>
+        `;
+        summaryContainer.innerHTML = `
+            <h2>Booking Summary</h2>
+            <p style="color: #60646c; font-size: 14px;">No items selected yet.</p>
+        `;
+        return;
+    }
+
+    let leftHtml = "";
+    let hallCost = 0;
+    let roomCost = 0;
+    let cateringCost = 0;
+    let stageCost = 0;
+    let furnitureCost = 0;
+    let serviceCost = 0;
+
+    // 1. HALL
+    if (cart.hall) {
+        hallCost = parseFloat(cart.hall.price || 0);
+        leftHtml += `
+            <div class="cart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;">
+                    <h2 style="border: none; padding: 0; margin: 0;"><i class="fa-solid fa-building-columns"></i> Hall Details</h2>
+                    <button onclick="RoyalCart.removeHall(); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer; font-weight: 500;"><i class="fa-solid fa-trash-can"></i> Remove</button>
+                </div>
+                <div class="item-row">
+                    <div>
+                        <h3>${cart.hall.name}</h3>
+                        <p>Capacity: ${cart.hall.capacity || 'N/A'} Guests</p>
+                    </div>
+                    <span>₹${hallCost.toLocaleString("en-IN")}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. ROOMS
+    if (cart.rooms.length > 0) {
+        leftHtml += `
+            <div class="cart-card">
+                <h2 style="border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;"><i class="fa-solid fa-bed"></i> Room Details</h2>
+        `;
+        cart.rooms.forEach(r => {
+            const rSub = parseFloat(r.total || (r.price * r.quantity));
+            roomCost += rSub;
+            leftHtml += `
+                <div class="item-row">
+                    <div>
+                        <h3>${r.name}</h3>
+                        <p>₹${parseFloat(r.price).toLocaleString("en-IN")} / night</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="qty-controls" style="display: flex; align-items: center; gap: 6px; border: 1px solid #dcdee0; border-radius: 6px; padding: 2px 6px;">
+                            <button onclick="RoyalCart.updateRoomQty('${r.id}', -1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">-</button>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight:600;">${r.quantity}</span>
+                            <button onclick="RoyalCart.updateRoomQty('${r.id}', 1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">+</button>
+                        </div>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹${rSub.toLocaleString("en-IN")}</span>
+                        <button onclick="RoyalCart.removeRoom('${r.id}'); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        leftHtml += `</div>`;
+    }
+
+    // 3. CATERING
+    if (cart.catering) {
+        cateringCost = parseFloat(cart.catering.total || cart.catering.price || 0);
+        const ppp = parseFloat(cart.catering.pricePerPlate || cart.catering.price || 0);
+        const guestCount = parseInt(cart.catering.guestCount) || 100;
+        leftHtml += `
+            <div class="cart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;">
+                    <h2 style="border: none; padding: 0; margin: 0;"><i class="fa-solid fa-utensils"></i> Catering Package</h2>
+                    <button onclick="RoyalCart.removeCatering(); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer; font-weight: 500;"><i class="fa-solid fa-trash-can"></i> Remove</button>
+                </div>
+                <div class="item-row">
+                    <div>
+                        <h3>${cart.catering.name}</h3>
+                        <p style="color: #60646c; font-size: 13px;">₹${ppp.toLocaleString("en-IN")} / plate</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="qty-controls" style="display: flex; align-items: center; gap: 6px; border: 1px solid #dcdee0; border-radius: 6px; padding: 2px 6px;">
+                            <button onclick="RoyalCart.updateCateringGuests(-10); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-size: 11px; font-weight: 600; padding: 0 4px;" title="-10 plates">-10</button>
+                            <button onclick="RoyalCart.updateCateringGuests(-1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">-</button>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight:600; min-width: 70px; text-align: center;">${guestCount} plates</span>
+                            <button onclick="RoyalCart.updateCateringGuests(1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">+</button>
+                            <button onclick="RoyalCart.updateCateringGuests(10); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-size: 11px; font-weight: 600; padding: 0 4px;" title="+10 plates">+10</button>
+                        </div>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹${cateringCost.toLocaleString("en-IN")}</span>
+                        <button onclick="RoyalCart.removeCatering(); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 4. STAGE DESIGN
+    if (cart.stage) {
+        stageCost = parseFloat(cart.stage.price || 0);
+        leftHtml += `
+            <div class="cart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;">
+                    <h2 style="border: none; padding: 0; margin: 0;"><i class="fa-solid fa-masks-theater"></i> Stage Design</h2>
+                    <button onclick="RoyalCart.removeStage(); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer; font-weight: 500;"><i class="fa-solid fa-trash-can"></i> Remove</button>
+                </div>
+                <div class="item-row">
+                    <div>
+                        <h3>${cart.stage.name}</h3>
+                    </div>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹${stageCost.toLocaleString("en-IN")}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // 5. FURNITURE
+    if (cart.furniture.length > 0) {
+        leftHtml += `
+            <div class="cart-card">
+                <h2 style="border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;"><i class="fa-solid fa-chair"></i> Furniture Items</h2>
+        `;
+        cart.furniture.forEach(f => {
+            const fSub = parseFloat(f.total || (f.price * f.quantity));
+            furnitureCost += fSub;
+            leftHtml += `
+                <div class="item-row">
+                    <div>
+                        <h3>${f.name}</h3>
+                        <p>₹${parseFloat(f.price).toLocaleString("en-IN")} per unit</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="qty-controls" style="display: flex; align-items: center; gap: 6px; border: 1px solid #dcdee0; border-radius: 6px; padding: 2px 6px;">
+                            <button onclick="RoyalCart.updateFurnitureQty('${f.id}', -1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">-</button>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight:600;">${f.quantity}</span>
+                            <button onclick="RoyalCart.updateFurnitureQty('${f.id}', 1); renderFullCartPage();" style="background:none; border:none; cursor:pointer; font-weight:bold; padding: 0 6px;">+</button>
+                        </div>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹${fSub.toLocaleString("en-IN")}</span>
+                        <button onclick="RoyalCart.removeFurniture('${f.id}'); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        leftHtml += `</div>`;
+    }
+
+    // 6. SERVICES
+    if (cart.services.length > 0) {
+        leftHtml += `
+            <div class="cart-card">
+                <h2 style="border-bottom: 1px solid #f0f0f3; padding-bottom: 12px; margin-bottom: 16px;"><i class="fa-solid fa-concierge-bell"></i> Additional Services</h2>
+        `;
+        cart.services.forEach(s => {
+            const sSub = parseFloat(s.price || 0);
+            serviceCost += sSub;
+            leftHtml += `
+                <div class="item-row">
+                    <div>
+                        <h3>${s.name}</h3>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹${sSub.toLocaleString("en-IN")}</span>
+                        <button onclick="RoyalCart.removeService('${s.id}'); renderFullCartPage();" style="background:none; border:none; color:#eb8e90; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        leftHtml += `</div>`;
+    }
+
+    leftContainer.innerHTML = leftHtml;
+
+    const grandTotal = hallCost + roomCost + cateringCost + stageCost + furnitureCost + serviceCost;
+
+    summaryContainer.innerHTML = `
+        <h2>Booking Summary</h2>
+        ${hallCost > 0 ? `<div class="summary-row"><span>Hall Cost</span><span>₹${hallCost.toLocaleString("en-IN")}</span></div>` : ''}
+        ${roomCost > 0 ? `<div class="summary-row"><span>Room Cost</span><span>₹${roomCost.toLocaleString("en-IN")}</span></div>` : ''}
+        ${cateringCost > 0 ? `<div class="summary-row"><span>Catering Cost</span><span>₹${cateringCost.toLocaleString("en-IN")}</span></div>` : ''}
+        ${stageCost > 0 ? `<div class="summary-row"><span>Stage Design</span><span>₹${stageCost.toLocaleString("en-IN")}</span></div>` : ''}
+        ${furnitureCost > 0 ? `<div class="summary-row"><span>Furniture Cost</span><span>₹${furnitureCost.toLocaleString("en-IN")}</span></div>` : ''}
+        ${serviceCost > 0 ? `<div class="summary-row"><span>Services Cost</span><span>₹${serviceCost.toLocaleString("en-IN")}</span></div>` : ''}
+        <hr style="border: none; border-top: 1px solid #f0f0f3; margin: 16px 0;">
+        <div class="summary-row total-row">
+            <span>Total Amount</span>
+            <span>₹${grandTotal.toLocaleString("en-IN")}</span>
+        </div>
+        <a href="{% url 'booking_overview' %}" class="booking-btn">
+            Proceed to Checkout
+        </a>
+        <button onclick="RoyalCart.clear(); renderFullCartPage();" style="width: 100%; margin-top: 10px; background: #ffffff; color: #60646c; border: 1px solid #dcdee0; padding: 10px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: background 0.2s ease;">
+            <i class="fa-solid fa-trash-can"></i> Clear Cart
+        </button>
+    `;
+}
+</script>
+{% endblock %}

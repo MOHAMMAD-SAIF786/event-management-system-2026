@@ -1,341 +1,108 @@
 {% extends 'cms/base.html' %}
+{% load static %}
+
+{% block title %}
+  Gallery Dashboard - Royal CMS
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'cms/css/gallery.css' %}" />
+{% endblock %}
 
 {% block content %}
-  <!-- Direct High-Priority Embedded CSS -->
-  <style>
-    /* Reset & Base Canvas */
-    .g-wrap {
-      padding: 25px;
-      font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
-    }
-    
-    .g-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-    
-    .g-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    /* Action Buttons */
-    .g-btn-group {
-      display: flex;
-      gap: 12px;
-    }
-    
-    .g-btn {
-      padding: 9px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-    
-    .g-btn-outline {
-      background-color: #ffffff;
-      color: #2563eb;
-      border: 1.5px solid #2563eb;
-    }
-    
-    .g-btn-outline:hover {
-      background-color: #eff6ff;
-    }
-    
-    .g-btn-primary {
-      background-color: #2563eb;
-      color: #ffffff;
-    }
-    
-    .g-btn-primary:hover {
-      background-color: #1d4ed8;
-    }
-    
-    /* Categories Box */
-    .g-card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-      margin-bottom: 25px;
-      border: 1px solid #e2e8f0;
-    }
-    
-    .g-card-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #64748b;
-      letter-spacing: 0.5px;
-      margin-bottom: 15px;
-    }
-    
-    .g-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    
-    .g-badge {
-      background-color: #f1f5f9;
-      color: #334155;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .g-badge-active {
-      background-color: #0f172a;
-      color: #ffffff;
-    }
-    
-    .g-badge-del {
-      color: #ef4444;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      line-height: 1;
-    }
-    
-    .g-badge-del:hover {
-      color: #dc2626;
-    }
-    
-    /* Gallery Grid & Image Cards */
-    .g-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
-    }
-    
-    .g-img-card {
-      background: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .g-img-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    
-    .g-img-card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      display: block;
-    }
-    
-    .g-img-footer {
-      padding: 12px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #ffffff;
-      border-top: 1px solid #f1f5f9;
-    }
-    
-    .g-cat-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: #2563eb;
-      background: #eff6ff;
-      padding: 3px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-    }
-    
-    .g-del-icon {
-      color: #ef4444;
-      background: #fef2f2;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    
-    .g-del-icon:hover {
-      background: #ef4444;
-      color: #ffffff;
-    }
-    
-    .g-empty {
-      text-align: center;
-      padding: 50px 20px;
-      color: #64748b;
-    }
-    
-    /* Popup Modal Styles */
-    .g-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 99999;
-    }
-    
-    .g-modal-overlay.active {
-      display: flex !important;
-    }
-    
-    .g-modal {
-      background: #ffffff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-      animation: popIn 0.2s ease-out;
-    }
-    
-    @keyframes popIn {
-      from {
-        transform: scale(0.95);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-    
-    .g-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    
-    .g-modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0;
-    }
-    
-    .g-modal-close {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #64748b;
-    }
-    
-    .g-field {
-      margin-bottom: 16px;
-    }
-    
-    .g-field label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: #475569;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-    
-    .g-field input,
-    .g-field select {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 14px;
-      outline: none;
-      box-sizing: border-box;
-    }
-    
-    .g-field input:focus,
-    .g-field select:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  </style>
-
-  <div class="g-wrap">
-    <!-- Top Bar -->
+  <div class="dashboard-container">
+    <!-- Top Bar Header -->
     <div class="g-header">
-      <h3 class="g-title"><i class="fas fa-images" style="color:#2563eb;"></i> Manage Gallery</h3>
+      <div>
+        <h1 class="g-title"><i class="fa-solid fa-images"></i> Gallery Dashboard</h1>
+        <p class="g-subtitle">Organize, categorize, and upload event gallery photos.</p>
+      </div>
       <div class="g-btn-group">
-        <button class="g-btn g-btn-outline" onclick="openModal('addCatModal')"><i class="fas fa-folder-plus"></i> Add Category</button>
-        <button class="g-btn g-btn-primary" onclick="openModal('uploadImgModal')"><i class="fas fa-cloud-upload-alt"></i> Upload Images</button>
+        <button type="button" class="g-btn g-btn-outline" onclick="openModal('addCatModal')">
+          <i class="fa-solid fa-folder-plus"></i> Add Category
+        </button>
+        <button type="button" class="g-btn g-btn-primary" onclick="openModal('uploadImgModal')">
+          <i class="fa-solid fa-cloud-upload-alt"></i> Upload Images
+        </button>
       </div>
     </div>
 
-    <!-- Alert Messages -->
-    {% if messages %}
-      {% for message in messages %}
-        <div style="padding: 12px 16px; background: #dbeafe; color: #1e40af; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
 
-    <!-- Categories List Card -->
+    <!-- Categories Overview Card -->
     <div class="g-card">
-      <div class="g-card-title">Categories Overview</div>
+      <div class="g-card-title">
+        <i class="fa-solid fa-layer-group"></i> Categories Overview
+      </div>
       <div class="g-badges">
-        <span class="g-badge g-badge-active">All Items ({{ items|length }})</span>
+        <a href="{% url 'cms:gallery_dashboard' %}" class="g-badge {% if not selected_category %}g-badge-active{% endif %}">
+          All Items ({{ total_items_count|default:items|length }})
+        </a>
         {% for cat in categories %}
-          <span class="g-badge">
-            {{ cat.name }}
-            <a href="?delete_category={{ cat.id }}" onclick="return confirm('Delete category {{ cat.name }}?')" class="g-badge-del">&times;</a>
-          </span>
+          <div class="g-badge {% if selected_category == cat.id|stringformat:'s' %}g-badge-active{% endif %}">
+            <a href="{% url 'cms:gallery_dashboard' %}?category={{ cat.id }}" class="g-badge-link">{{ cat.name }}</a>
+            <a href="javascript:void(0)" onclick="event.stopPropagation(); confirmExpoDelete('{% url 'cms:gallery_dashboard' %}?delete_category={{ cat.id }}', '{{ cat.name|escapejs }} Category')" class="g-badge-del" title="Delete Category">&times;</a>
+          </div>
         {% empty %}
-          <span style="color: #94a3b8; font-size: 13px;">No categories added yet.</span>
+          <span style="color: var(--text-muted); font-size: 13px;">No categories added yet.</span>
         {% endfor %}
       </div>
     </div>
 
     <!-- Images Grid Card -->
     <div class="g-card">
-      <div class="g-card-title">Gallery Items</div>
+      <div class="g-card-title">
+        <i class="fa-solid fa-photo-film"></i> Gallery Photos
+      </div>
       {% if items %}
         <div class="g-grid">
           {% for item in items %}
             <div class="g-img-card">
-              <img src="{{ item.image.url }}" alt="Gallery Photo" />
+              <div class="g-img-wrapper" onclick="openFullImageModal('{{ item.image.url }}', '{{ item.title|default:'Gallery Image'|escapejs }}')" title="Click to view full image">
+                <img src="{{ item.image.url }}" alt="{{ item.title|default:'Gallery Photo' }}" loading="lazy" />
+                <div class="g-img-overlay">
+                  <i class="fa-solid fa-expand g-zoom-icon"></i>
+                </div>
+              </div>
               <div class="g-img-footer">
-                <span class="g-cat-tag">{{ item.category.name }}</span>
-                <a href="?delete_item={{ item.id }}" onclick="return confirm('Delete this image?');" class="g-del-icon" title="Delete"><i class="fas fa-trash-alt"></i></a>
+                <div class="g-img-info">
+                  <div class="g-img-title">{{ item.title|default:"Untitled Photo" }}</div>
+                  <span class="g-cat-tag">{{ item.category.name }}</span>
+                </div>
+                <button type="button" onclick="confirmExpoDelete('{% url 'cms:gallery_dashboard' %}?delete_item={{ item.id }}{% if selected_category %}&category={{ selected_category }}{% endif %}', 'this photo')" class="g-del-icon" title="Delete Image">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
               </div>
             </div>
           {% endfor %}
         </div>
+
+        <!-- PAGINATION -->
+        {% if items.paginator.num_pages > 1 %}
+          <div class="expo-pagination" style="margin-top: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <span class="pagination-info">
+              Showing Page <strong>{{ items.number }}</strong> of <strong>{{ items.paginator.num_pages }}</strong> ({{ items.paginator.count }} photos)
+            </span>
+
+            <div class="pagination-links">
+              {% if items.has_previous %}
+                <a href="?page={{ items.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">
+                  <i class="fa-solid fa-chevron-left"></i> Previous
+                </a>
+              {% endif %}
+
+              {% if items.has_next %}
+                <a href="?page={{ items.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
       {% else %}
         <div class="g-empty">
-          <i class="fas fa-photo-video" style="font-size: 40px; color: #cbd5e1; margin-bottom: 12px;"></i>
-          <h5 style="margin: 0; color: #334155;">No gallery images uploaded yet</h5>
-          <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Click on 'Upload Images' button to start adding photos.</p>
+          <i class="fa-solid fa-images" style="font-size: 40px; color: var(--border-strong); margin-bottom: 12px;"></i>
+          <h5 style="margin: 0; color: var(--text-main); font-size: 16px; font-weight: 600;">No gallery images uploaded yet</h5>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Click 'Upload Images' to start adding photos to the event gallery.</p>
         </div>
       {% endif %}
     </div>
@@ -345,8 +112,8 @@
   <div class="g-modal-overlay" id="addCatModal">
     <div class="g-modal">
       <div class="g-modal-header">
-        <h4 class="g-modal-title">Add New Category</h4>
-        <button class="g-modal-close" onclick="closeModal('addCatModal')">&times;</button>
+        <h4 class="g-modal-title"><i class="fa-solid fa-folder-plus"></i> Add New Category</h4>
+        <button type="button" class="g-modal-close" onclick="closeModal('addCatModal')">&times;</button>
       </div>
       <form method="POST">
         {% csrf_token %}
@@ -355,7 +122,7 @@
           <label>Category Name</label>
           <input type="text" name="name" placeholder="e.g. Wedding, Birthday, Corporate" required />
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color);">
           <button type="button" class="g-btn g-btn-outline" onclick="closeModal('addCatModal')">Cancel</button>
           <button type="submit" class="g-btn g-btn-primary">Save Category</button>
         </div>
@@ -367,12 +134,17 @@
   <div class="g-modal-overlay" id="uploadImgModal">
     <div class="g-modal">
       <div class="g-modal-header">
-        <h4 class="g-modal-title">Upload Gallery Images</h4>
-        <button class="g-modal-close" onclick="closeModal('uploadImgModal')">&times;</button>
+        <h4 class="g-modal-title"><i class="fa-solid fa-cloud-upload-alt"></i> Upload Gallery Images</h4>
+        <button type="button" class="g-modal-close" onclick="closeModal('uploadImgModal')">&times;</button>
       </div>
       <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action_type" value="upload_images" />
+        <div class="g-field">
+          <label>Photo Title / Name</label>
+          <input type="text" name="title" placeholder="e.g. Royal Wedding Stage, Grand Entrance" />
+          <small style="color: var(--text-muted); font-size: 11px; margin-top: 2px; display: block;">Optional. Enter a name for the image(s).</small>
+        </div>
         <div class="g-field">
           <label>Select Category</label>
           <select name="category_id" required>
@@ -385,9 +157,9 @@
         <div class="g-field">
           <label>Choose Images</label>
           <input type="file" name="images" multiple accept="image/*" required />
-          <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">You can select multiple photos at once.</small>
+          <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">You can select multiple photos at once.</small>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color);">
           <button type="button" class="g-btn g-btn-outline" onclick="closeModal('uploadImgModal')">Cancel</button>
           <button type="submit" class="g-btn g-btn-primary">Upload Now</button>
         </div>
@@ -395,21 +167,22 @@
     </div>
   </div>
 
-  <!-- JavaScript to handle popups smoothly without bootstrap dependency -->
+  <!-- JavaScript to handle modal popups -->
   <script>
     function openModal(id) {
-      document.getElementById(id).classList.add('active')
+      var m = document.getElementById(id);
+      if (m) m.classList.add('active');
     }
     
     function closeModal(id) {
-      document.getElementById(id).classList.remove('active')
+      var m = document.getElementById(id);
+      if (m) m.classList.remove('active');
     }
     
-    // Close modal if clicked outside box
-    window.onclick = function (event) {
+    window.addEventListener('click', function (event) {
       if (event.target.classList.contains('g-modal-overlay')) {
-        event.target.classList.remove('active')
+        event.target.classList.remove('active');
       }
-    }
+    });
   </script>
 {% endblock %}

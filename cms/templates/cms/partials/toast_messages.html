@@ -1,0 +1,123 @@
+{% if messages %}
+<div class="expo-toast-container" id="expoToastContainer">
+  {% for message in messages %}
+    <div class="expo-toast toast-{{ message.tags|default:'info' }}">
+      <div class="expo-toast-body">
+        {% if message.tags == 'success' %}
+          <i class="fa-solid fa-circle-check" style="color: #16a34a; font-size: 15px;"></i>
+        {% elif message.tags == 'error' %}
+          <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 15px;"></i>
+        {% elif message.tags == 'warning' %}
+          <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; font-size: 15px;"></i>
+        {% else %}
+          <i class="fa-solid fa-circle-info" style="color: #000000; font-size: 15px;"></i>
+        {% endif %}
+        <span>{{ message }}</span>
+      </div>
+      <span class="expo-toast-close" onclick="dismissToast(this.parentElement)">&times;</span>
+    </div>
+  {% endfor %}
+</div>
+
+<style>
+.expo-toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+  width: calc(100vw - 48px);
+  pointer-events: none;
+}
+
+.expo-toast {
+  pointer-events: auto;
+  background: #ffffff;
+  color: #09090b;
+  border: 1px solid #f0f0f3;
+  border-left: 4px solid #000000;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.expo-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+}
+
+.expo-toast-close {
+  font-size: 18px;
+  cursor: pointer;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+}
+
+.expo-toast-close:hover {
+  color: #09090b;
+  background: #f4f4f5;
+}
+
+.expo-toast.toast-success {
+  border-left-color: #16a34a;
+}
+
+.expo-toast.toast-error {
+  border-left-color: #ef4444;
+}
+
+.expo-toast.toast-warning {
+  border-left-color: #f59e0b;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>
+
+<script>
+function dismissToast(element) {
+  if (!element) return;
+  element.style.opacity = '0';
+  element.style.transform = 'translateX(100%)';
+  setTimeout(function() {
+    element.remove();
+  }, 300);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const toasts = document.querySelectorAll('.expo-toast');
+  toasts.forEach(function(toast) {
+    setTimeout(function() {
+      dismissToast(toast);
+    }, 4000);
+  });
+});
+</script>
+{% endif %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CateringPackage, CateringFeature, MenuSection, MenuItem, MenuCategory, GuestPricing, BannarFeature
+from .models import CateringPackage, CateringFeature, MenuSection, MenuItem, MenuCategory, GuestPricing, BannarFeature, CateringPage
 
 
 class CateringFeatureInline(admin.TabularInline):
@@ -91,3 +91,7 @@ class GuestPricingAdmin(admin.ModelAdmin):
     list_filter = (
         'package',
     )
+
+@admin.register(CateringPage)
+class CateringPageAdmin(admin.ModelAdmin):
+    list_display = ('hero_title', 'hero_subtitle')

@@ -17,16 +17,18 @@
     <link rel="stylesheet" href="{% static 'cms/css/sidebar.css' %}">
     <link rel="stylesheet" href="{% static 'cms/css/header.css' %}">
     <link rel="stylesheet" href="{% static 'cms/css/dashboard.css' %}" />
-    <link rel="stylesheet" href="{% static 'cms/css/customer_list.css' %}">
 
     {% block extra_css %}
     {% endblock %}
   </head>
 
   <body>
+    {% include 'cms/partials/toast_messages.html' %}
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     {% include 'cms/partials/sidebar.html' %}
 
     <div class="main-content">
+      {% include 'cms/partials/header.html' %}
 
       <main>
         {% block content %}
@@ -36,6 +38,9 @@
 
       {% include 'cms/partials/footer.html' %}
     </div>
+
+    {% include 'cms/partials/image_modal.html' %}
+    {% include 'cms/partials/delete_modal.html' %}
 
     <script src="{% static 'cms/js/sidebar.js' %}"></script>
     <script src="{% static 'cms/js/dashboard.js' %}"></script>

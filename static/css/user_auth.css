@@ -1,0 +1,528 @@
+/* User Auth & Account Dashboard Styles (Expo Aesthetics) */
+
+:root {
+    --auth-bg: #fafafa;
+    --auth-card-bg: #ffffff;
+    --auth-border: #e4e4e7;
+    --auth-border-focus: #171717;
+    --auth-ink: #171717;
+    --auth-muted: #71717a;
+    --auth-primary: #000000;
+    --auth-primary-hover: #1a1a1a;
+    --auth-blue: #0d74ce;
+    --auth-blue-bg: #eff6ff;
+    --auth-radius: 12px;
+}
+
+/* Page Layout */
+.auth-page-wrapper {
+    min-height: calc(100vh - 120px);
+    background: var(--auth-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 20px 60px 20px;
+}
+
+
+.auth-card {
+    background: var(--auth-card-bg);
+    border: 1px solid var(--auth-border);
+    border-radius: var(--auth-radius);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.auth-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--auth-ink);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.auth-header p {
+    color: var(--auth-muted);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Forms */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.auth-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.auth-form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--auth-ink);
+}
+
+.auth-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-input-wrapper i {
+    position: absolute;
+    left: 14px;
+    color: var(--auth-muted);
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.auth-input-wrapper input,
+.auth-input-wrapper textarea,
+.auth-form-group input,
+.auth-form-group textarea {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border: 1px solid var(--auth-border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--auth-ink);
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.auth-form-group input:not(.auth-input-wrapper input),
+.auth-form-group textarea:not(.auth-input-wrapper textarea) {
+    padding-left: 14px;
+}
+
+.auth-input-wrapper input:focus,
+.auth-form-group input:focus,
+.auth-form-group textarea:focus {
+    outline: none;
+    border-color: var(--auth-border-focus);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.auth-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--auth-primary);
+    color: #ffffff;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.1s ease;
+    width: 100%;
+
+}
+
+.auth-btn-primary:hover {
+    background: var(--auth-primary-hover);
+    color: #ffffff;
+}
+
+.auth-footer-text {
+    text-align: center;
+    font-size: 13px;
+    color: var(--auth-muted);
+    margin-top: 20px;
+}
+
+.auth-footer-text a {
+    color: var(--auth-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-footer-text a:hover {
+    text-decoration: underline;
+}
+
+/* Account Dashboard Layout */
+.account-container {
+    max-width: 1140px;
+    margin: 120px auto 60px auto;
+    padding: 0 20px;
+}
+
+
+.account-header {
+    margin-bottom: 32px;
+}
+
+.account-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--auth-ink);
+    margin-bottom: 6px;
+}
+
+.account-header p {
+    color: var(--auth-muted);
+    font-size: 14px;
+    margin: 0;
+}
+
+.account-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+}
+
+/* Account Nav Sidebar */
+.account-sidebar {
+    background: var(--auth-card-bg);
+    border: 1px solid var(--auth-border);
+    border-radius: var(--auth-radius);
+    padding: 20px;
+    height: fit-content;
+}
+
+.account-user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--auth-border);
+}
+
+.account-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--auth-primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.account-user-info h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--auth-ink);
+    margin: 0 0 2px 0;
+}
+
+.account-user-info p {
+    font-size: 12px;
+    color: var(--auth-muted);
+    margin: 0;
+}
+
+.account-nav-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--auth-ink);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.account-nav-link:hover,
+.account-nav-link.active {
+    background: #f4f4f5;
+    color: var(--auth-ink);
+}
+
+.account-nav-link.active {
+    font-weight: 600;
+}
+
+.account-nav-link i {
+    font-size: 15px;
+    width: 20px;
+    color: var(--auth-muted);
+}
+
+.account-nav-link.logout-link {
+    color: #dc2626;
+}
+
+.account-nav-link.logout-link i {
+    color: #dc2626;
+}
+
+/* Account Main Content Cards */
+.account-card {
+    background: var(--auth-card-bg);
+    border: 1px solid var(--auth-border);
+    border-radius: var(--auth-radius);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.account-card-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--auth-ink);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Account Tables */
+.account-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.account-table thead tr {
+    border-bottom: 1px solid var(--auth-border);
+    text-align: left;
+}
+
+.account-table th {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.88px;
+    text-transform: uppercase;
+    color: var(--auth-muted);
+    border-bottom: 1px solid var(--auth-border);
+    background: #fafafa;
+}
+
+.account-table th:first-child {
+    border-top-left-radius: 6px;
+}
+
+.account-table th:last-child {
+    border-top-right-radius: 6px;
+    text-align: right;
+}
+
+.account-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.account-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.account-table td {
+    padding: 14px;
+    border-bottom: 1px solid var(--auth-border);
+    color: var(--auth-ink);
+    vertical-align: middle;
+}
+
+.account-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.account-table td:last-child {
+    text-align: right;
+}
+
+.price-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--auth-ink);
+    font-size: 14px;
+}
+
+/* Invoice Action Link */
+.btn-invoice-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--auth-border);
+    border-radius: 6px;
+    color: var(--auth-ink);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    background: #ffffff;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.btn-invoice-link:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+}
+
+/* Status Badges */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-pending {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.badge-confirmed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.badge-draft {
+    background: #f4f4f5;
+    color: #52525b;
+}
+
+/* User Menu in Header */
+.user-menu-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* UNBROKEN HOVER HIT-BOX BRIDGE */
+.user-menu-dropdown::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: -10px;
+    right: -10px;
+    height: 16px;
+    display: block;
+    z-index: 999;
+}
+
+.user-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: var(--auth-ink);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--auth-border);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.user-menu-btn i.fa-chevron-down {
+    transition: transform 0.2s ease;
+}
+
+.user-menu-btn:hover,
+.user-menu-dropdown:hover .user-menu-btn,
+.user-menu-dropdown.active .user-menu-btn {
+    background: #f0f0f3;
+    border-color: #171717;
+}
+
+.user-menu-dropdown:hover .user-menu-btn i.fa-chevron-down,
+.user-menu-dropdown.active .user-menu-btn i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.user-dropdown-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #ffffff;
+    border: 1px solid var(--auth-border);
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    min-width: 190px;
+    z-index: 1000;
+    padding: 6px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+}
+
+.user-menu-dropdown:hover .user-dropdown-panel,
+.user-menu-dropdown:focus-within .user-dropdown-panel,
+.user-menu-dropdown.active .user-dropdown-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.user-dropdown-panel a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--auth-ink);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.user-dropdown-panel a:hover {
+    background: #f4f4f5;
+    color: #000000;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: var(--auth-border);
+    margin: 4px 0;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-card {
+        padding: 24px 18px;
+    }
+}

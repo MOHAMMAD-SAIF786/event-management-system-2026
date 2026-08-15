@@ -1,0 +1,25 @@
+<!-- EXPO DESIGN SYSTEM - FULL IMAGE LIGHTBOX MODAL -->
+<div id="expoImageModal" class="expo-modal-backdrop" onclick="closeFullImageModal(event)" role="dialog" aria-modal="true" aria-labelledby="expoModalTitle">
+  <div class="expo-modal-container" onclick="event.stopPropagation()">
+    <div class="expo-modal-header">
+      <div class="expo-modal-title">
+        <i class="fa-solid fa-image" style="color: var(--primary);"></i>
+        <span id="expoModalTitle">Banner Image Preview</span>
+      </div>
+      <button type="button" class="expo-modal-close" onclick="closeFullImageModal()" aria-label="Close modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="expo-modal-body">
+      <img id="expoModalImage" src="" alt="Full View Banner Image" />
+    </div>
+    <div class="expo-modal-footer">
+      <a id="expoModalDownloadBtn" href="" target="_blank" download class="btn-expo-secondary btn-sm">
+        <i class="fa-solid fa-download"></i> Download Original
+      </a>
+      <button type="button" class="btn-expo-primary btn-sm" onclick="closeFullImageModal()">
+        Close Preview
+      </button>
+    </div>
+  </div>
+</div>

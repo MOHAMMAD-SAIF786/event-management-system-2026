@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Diamond Banquet|Royal Events
+  {{ hall.name }} | Royal Events
 {% endblock %}
 
 {% block extra_css %}
@@ -12,7 +12,7 @@
 {% block content %}
   <!-- HERO -->
 
-  <section class="hall-hero" style="background-image:url('{{ hall.banner_image.url }}');">
+  <section class="hall-hero" {% if hall.banner_image %}style="background-image:url('{{ hall.banner_image.url }}');"{% endif %}>
     <div class="hero-overlay">
       {% if hall.show_badge %}
         <span class="hall-badge">⭐ Premium Wedding Venue</span>
@@ -23,9 +23,9 @@
       <p>{{ hall.description }}</p>
 
       <div class="hero-buttons">
-        <a href="#customize" class="btn-primary">Customize Event</a>
+        <a href="javascript:void(0)" onclick="addHallToCart('{{ hall.id }}', '{{ hall.name|escapejs }}', '{{ hall.price }}', '{{ hall.capacity }}')" class="btn-primary"><i class="fa-solid fa-cart-plus"></i> Select Hall</a>
 
-        <a href="#gallery" class="btn-secondary">View Gallery</a>
+        <a href="#customize" class="btn-secondary">Customize Event</a>
       </div>
     </div>
   </section>
@@ -37,6 +37,22 @@
       <h2>Venue Information</h2>
       <p>Everything you need for a perfect event</p>
     </div>
+
+    {% if has_booked_dates %}
+      <div class="availability-caution-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <strong>Hall Availability Caution:</strong> This hall is unavailable on <strong>{{ booked_dates_str }}</strong> due to existing bookings. Please verify your event date before proceeding.
+        </div>
+      </div>
+    {% else %}
+      <div class="availability-success-banner">
+        <i class="fa-solid fa-circle-check"></i>
+        <div>
+          <strong>Hall Availability:</strong> This venue is available on all upcoming dates!
+        </div>
+      </div>
+    {% endif %}
 
     <div class="info-grid">
       {% for feature in hall.features.all %}
@@ -59,7 +75,14 @@
 
     <div class="gallery-grid">
       {% for image in hall.gallery.all %}
-        <img src="{{ image.hall_image.url }}" alt="{{ image.title }}" />
+        <div class="gallery-img-wrapper">
+          <img src="{{ image.hall_image.url }}" alt="{{ image.title|default:hall.name }}" />
+          <div class="gallery-img-overlay">
+            <button type="button" class="view-full-btn" onclick="openImageModal('{{ image.hall_image.url }}', '{{ image.title|default:hall.name|escapejs }}')">
+              <i class="fa-solid fa-expand"></i> View Full Image
+            </button>
+          </div>
+        </div>
       {% endfor %}
     </div>
   </section>
@@ -120,8 +143,23 @@
           {% for stage in category.designs.all %}
             <div class="swiper-slide">
               <div class="stage-card">
-                <span class="new-badge">New!</span>
-                <img src="{{ stage.image.url }}" alt="{{ stage.name }}" />
+                {% if stage.badge %}
+                  <span class="new-badge">{{ stage.badge }}</span>
+                {% endif %}
+                {% if stage.image %}
+                  <div class="stage-img-wrapper">
+                    <img src="{{ stage.image.url }}" alt="{{ stage.name }}" />
+                    <div class="stage-img-overlay">
+                      <button type="button" class="view-full-btn" onclick="openImageModal('{{ stage.image.url }}', '{{ stage.name|escapejs }}')">
+                        <i class="fa-solid fa-expand"></i> View Full Image
+                      </button>
+                    </div>
+                  </div>
+                {% else %}
+                  <div style="width:100%; height:240px; background:#fafafa; display:flex; align-items:center; justify-content:center; color:#999;">
+                    <i class="fa-solid fa-star" style="font-size: 48px;"></i>
+                  </div>
+                {% endif %}
                 <div class="stage-content">
                   <h3>{{ stage.name }}</h3>
                   {% if stage.description %}
@@ -137,6 +175,7 @@
       </div>
     </section>
   {% endfor %}
+  
   {% for category in hall.service_categories.all %}
     <section class="service-section">
       <div class="section-title">
@@ -158,105 +197,7 @@
 
   <section class="summary-section">
     <div class="summary-card">
-      <div class="summary-header">
-        <h2>Event Summary</h2>
-        <p>Your booking details</p>
-      </div>
-
-      <!-- Hall -->
-
-      <div class="summary-box active">
-        <div class="summary-title">
-          <div>🏛 Hall Booking</div>
-
-          <div class="accordion-right">
-            <strong>₹{{ hall.price }}</strong>
-
-            <i class="fa-solid fa-circle-check text-success"></i>
-          </div>
-        </div>
-
-        <div class="summary-body" style="display: block;">
-          <div class="summary-row">
-            <div class="summary-left">
-              <h4>{{ hall.name }}</h4>
-
-              <small>Hall Reserved Successfully</small>
-            </div>
-
-            <div class="summary-price">Confirmed ✅</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Furniture -->
-
-      <div class="summary-box">
-        <div class="summary-title accordion">
-          <div>🪑 Furniture & Seating</div>
-
-          <div class="accordion-right">
-            <strong id="furnitureTotal">₹0</strong>
-
-            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-          </div>
-        </div>
-
-        <div class="summary-body">
-          <div id="furnitureSummary"></div>
-        </div>
-      </div>
-
-      <!-- Stage -->
-
-      <div class="summary-box">
-        <div class="summary-title accordion">
-          <div>🎭 Stage Decoration</div>
-
-          <div class="accordion-right">
-            <strong id="stageTotal">₹0</strong>
-
-            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-          </div>
-        </div>
-
-        <div class="summary-body">
-          <div id="stageSummary"></div>
-        </div>
-      </div>
-
-      <!-- Additional services -->
-      <div class="summary-box">
-        <div class="summary-title accordion">
-          <div>🎉 Additional Services</div>
-
-          <div class="accordion-right">
-            <strong id="servicesTotal">₹0</strong>
-
-            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-          </div>
-        </div>
-
-        <div class="summary-body">
-          <div id="servicesSummary"></div>
-        </div>
-      </div>
-
-      <!-- Grand Total -->
-
-      <div class="grand-total">
-        <span>Total Amount</span>
-
-        <strong id="grandTotal">₹0</strong>
-      </div>
-
-      <div class="summary-buttons">
-        <button type="button" class="summary-btn" onclick="goToRoom()">Select Rooms</button>
-
-        <a href="{% url 'catering' %}" class="summary-btn">Select Catering</a>
-
-        <button type="button" class="summary-btn final-btn" onclick="goToBookingOverview()">Continue Booking</button>
-      </div>
+      <!-- Rendered dynamically by unified_summary.js -->
     </div>
   </section>
 
@@ -285,225 +226,76 @@
       furnitureTotal: 0,
       grandTotal: 0
     }
+    // Initialize Hall in RoyalCart on page load
+    if (typeof RoyalCart !== 'undefined') {
+      RoyalCart.setHall({
+        id: '{{ hall.id }}',
+        name: '{{ hall.name|escapejs }}',
+        price: parseFloat('{{ hall.price }}'),
+        capacity: '{{ hall.capacity }}'
+      }, false);
+    }
+
     function updateFurniture() {
-      bookingData.furniture = []
-      bookingData.furnitureTotal = 0
-    
+      const furnitureList = [];
       document.querySelectorAll('.furniture-card').forEach((card) => {
-        let qty = parseInt(card.querySelector('.qty').innerText)
-    
-        let price = parseFloat(card.dataset.price)
-    
-        let name = card.dataset.name
-    
-        console.log('Furniture ID =', card.dataset.id)
-        console.log(card)
-    
-        bookingData.furniture.push({
-          id: card.dataset.id,
-    
-          name: name,
-    
-          quantity: qty,
-    
-          price: price,
-    
-          total: qty * price
-        })
-      })
-      bookingData.furnitureTotal = 0
-    
-      bookingData.furniture.forEach((item) => {
-        bookingData.furnitureTotal += item.total
-      })
-      let html = ''
-    
-      bookingData.furniture.forEach((item) => {
-        html += `
-                        <div class="summary-row">
-        
-                            <div class="summary-left">
-        
-                                <h4>${item.name}</h4>
-        
-                                <small>
-                                    ${item.quantity} × ₹${item.price}
-                                </small>
-        
-                            </div>
-        
-                            <div class="summary-price">
-        
-                                ₹${item.total.toLocaleString('en-IN')}
-        
-                            </div>
-        
-                        </div>
-                    `
-      })
-    
-      document.getElementById('furnitureSummary').innerHTML = html
-    
-      document.getElementById('furnitureTotal').innerText = '₹' + bookingData.furnitureTotal.toLocaleString('en-IN')
-    
-      console.table(bookingData.furniture)
-    
-      console.log('Furniture Total =', bookingData.furnitureTotal)
-    
-      console.log(bookingData)
-    
-      updateGrandTotal()
+        let qty = parseInt(card.querySelector('.qty').innerText);
+        if (qty > 0) {
+          furnitureList.push({
+            id: card.dataset.id,
+            name: card.dataset.name,
+            quantity: qty,
+            price: parseFloat(card.dataset.price),
+            total: qty * parseFloat(card.dataset.price)
+          });
+        }
+      });
+      if (typeof RoyalCart !== 'undefined') {
+        const cart = RoyalCart.get();
+        cart.furniture = furnitureList;
+        RoyalCart.save(cart);
+      }
+      if (typeof renderUnifiedSummaryCard === 'function') {
+        renderUnifiedSummaryCard();
+      }
     }
     
     function updateStageSummary() {
-      if (bookingData.stage == null) {
-        document.getElementById('stageSummary').innerHTML = ''
-    
-        document.getElementById('stageTotal').innerText = '₹0'
-    
-        return
+      if (typeof RoyalCart !== 'undefined') {
+        const cart = RoyalCart.get();
+        cart.stage = bookingData.stage;
+        RoyalCart.save(cart);
       }
-    
-      document.getElementById('stageSummary').innerHTML = `
-        
-                    <div class="summary-row">
-        
-                        <div class="summary-left">
-        
-                            <h4>${bookingData.stage.name}</h4>
-        
-                            <small>
-                            Premium Stage Decoration
-                            </small>
-        
-                        </div>
-        
-                        <div class="summary-price">
-        
-                            ₹${bookingData.stage.price.toLocaleString('en-IN')}
-        
-                        </div>
-        
-                    </div>
-        
-                `
-    
-      document.getElementById('stageTotal').innerText = '₹' + bookingData.stage.price.toLocaleString('en-IN')
-    
-      updateGrandTotal()
+      if (typeof renderUnifiedSummaryCard === 'function') {
+        renderUnifiedSummaryCard();
+      }
     }
     
     function updateServiceSummary() {
-      let total = 0
-      let groupedServices = {}
-      bookingData.entertainment = []
-      bookingData.photography = []
-      bookingData.guestServices = []
-    
+      const srvList = [];
       document.querySelectorAll('.service-checkbox:checked').forEach((item) => {
-        let category = item.dataset.category
-    
-        if (!groupedServices[category]) {
-          groupedServices[category] = []
-        }
-    
-        let price = parseFloat(item.dataset.price)
-    
-        let serviceData = {
+        srvList.push({
           id: item.dataset.id,
-    
           name: item.dataset.name,
-    
-          price: price
-        }
-    
-        if (category === 'DJ & Entertainment') {
-          bookingData.entertainment.push(serviceData)
-        } else if (category === 'Photography & Videography') {
-          bookingData.photography.push(serviceData)
-        } else {
-          bookingData.guestServices.push(serviceData)
-        }
-    
-        groupedServices[category].push({
-          name: item.dataset.name,
-          price: price
-        })
-    
-        total += price
-      })
-    
-      // Nothing Selected
-      if (Object.keys(groupedServices).length === 0) {
-        document.getElementById('servicesSummary').innerHTML = ''
-        document.getElementById('servicesTotal').innerText = '₹0'
-    
-        return
+          category: item.dataset.category,
+          price: parseFloat(item.dataset.price)
+        });
+      });
+      if (typeof RoyalCart !== 'undefined') {
+        const cart = RoyalCart.get();
+        cart.services = srvList;
+        RoyalCart.save(cart);
       }
-    
-      let html = ''
-    
-      for (let category in groupedServices) {
-        html += `
-                <div class="summary-category">
-        
-                    <div class="summary-category-title">
-                        ${category}
-                    </div>
-                `
-    
-        groupedServices[category].forEach((service) => {
-          html += `
-                    <div class="summary-row">
-        
-                        <div class="summary-left">
-                            <h4>${service.name}</h4>
-                        </div>
-        
-                        <div class="summary-price">
-                            ₹${service.price.toLocaleString('en-IN')}
-                        </div>
-        
-                    </div>
-                    `
-        })
-    
-        html += `</div>`
+      if (typeof renderUnifiedSummaryCard === 'function') {
+        renderUnifiedSummaryCard();
       }
-    
-      document.getElementById('servicesSummary').innerHTML = html
-    
-      document.getElementById('servicesTotal').innerText = '₹' + total.toLocaleString('en-IN')
-    
-      updateGrandTotal()
     }
     
     document.querySelectorAll('.service-checkbox').forEach((item) => {
       item.addEventListener('change', function () {
-        updateServiceSummary()
-        updateGrandTotal()
-      })
-    })
-    
-    function updateGrandTotal() {
-      let hallPrice = bookingData.hall ? bookingData.hall.price : 0
-    
-      let furniture = bookingData.furnitureTotal || 0
-    
-      let stage = bookingData.stage ? bookingData.stage.price : 0
-    
-      let services = 0
-    
-      document.querySelectorAll('.service-checkbox:checked').forEach((item) => {
-        services += parseFloat(item.dataset.price)
-      })
-    
-      let grandTotal = hallPrice + furniture + stage + services
-    
-      bookingData.grandTotal = grandTotal
-    
-      document.getElementById('grandTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN')
-    }
+        updateServiceSummary();
+      });
+    });
     
     const plusButtons = document.querySelectorAll('.plus-btn')
     plusButtons.forEach((button) => {
@@ -640,10 +432,50 @@
       window.location.href = '/room/'
     }
   </script>
+
+  <!-- IMAGE LIGHTBOX MODAL -->
+  <div id="imageLightboxModal" class="img-modal-overlay" onclick="closeImageModalOnBackdrop(event)">
+    <div class="img-modal-container">
+      <button type="button" class="img-modal-close" onclick="closeImageModal()" aria-label="Close modal">&times;</button>
+      <img id="lightboxModalImg" src="" alt="Full view" />
+      <div id="lightboxModalCaption" class="img-modal-caption"></div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
   <script>
+    function openImageModal(imgUrl, captionText) {
+      const modal = document.getElementById('imageLightboxModal');
+      const modalImg = document.getElementById('lightboxModalImg');
+      const modalCaption = document.getElementById('lightboxModalCaption');
+      if (!modal || !modalImg) return;
+      
+      modalImg.src = imgUrl;
+      modalCaption.innerText = captionText || '';
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+      const modal = document.getElementById('imageLightboxModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function closeImageModalOnBackdrop(event) {
+      if (event.target.id === 'imageLightboxModal') {
+        closeImageModal();
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeImageModal();
+      }
+    });
+
     document.querySelectorAll('.swiper').forEach((swiper) => {
       console.log('Class Name =', swiper.className)
     

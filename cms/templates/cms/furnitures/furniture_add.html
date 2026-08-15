@@ -2,187 +2,137 @@
 {% load static %}
 
 {% block title %}
-Add Furniture
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'cms/css/furniture_add.css' %}" />
+  Add Furniture - CMS
 {% endblock %}
 
 {% block content %}
-<div class="page-wrapper">
+<div class="dashboard-container">
   <div class="page-header">
     <div>
-      <h1>Add Furniture</h1>
+      <h1><i class="fa-solid fa-plus"></i> Add Furniture</h1>
       {% if hall %}
-      <p>{{ hall.name }}</p>
+      <p>Configuring items for <strong>{{ hall.name }}</strong></p>
       {% else %}
-      <p>Select Hall & Add Furniture</p>
+      <p>Select a hall to configure categories and furniture items</p>
       {% endif %}
     </div>
 
     {% if hall %}
-    <a href="{% url 'cms:cms_hall_detail' hall.id %}" class="back-btn">
-      {% else %}
-      <a href="{% url 'furniture_list' %}" class="back-btn">
-        {% endif %}
-        <i class="fa-solid fa-arrow-left"></i>
-        Back
-      </a>
+    <a href="{% url 'cms:cms_hall_detail' hall.id %}" class="btn-expo-secondary">
+    {% else %}
+    <a href="{% url 'cms:furniture_list' %}" class="btn-expo-secondary">
+    {% endif %}
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
   </div>
 
-  <div class="glass-card">
-
-    <h2>Hall Information</h2>
-
+  <div class="expo-card">
+    <h2 style="font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 12px;">1. Select Hall</h2>
     {% if is_from_hall %}
-
-    <input type="hidden" name="hall" value="{{ hall.id }}">
-
-    <input type="text" value="{{ hall.name }}" readonly>
-
+      <input type="hidden" name="hall" value="{{ hall.id }}">
+      <input type="text" value="{{ hall.name }}" readonly class="expo-input" style="background: var(--bg-main);" />
     {% else %}
-
-    <select id="hall_select" name="hall">
-
-      <option value="">Select Hall</option>
-
-      {% for h in halls %}
-
-      <option value="{{ h.id }}">
-
-        {{ h.name }}
-
-      </option>
-
-      {% endfor %}
-
-    </select>
-
+      <select id="hall_select" name="hall" class="expo-input" onchange="if(this.value) location.href='?hall='+this.value">
+        <option value="">-- Select Hall --</option>
+        {% for h in halls %}
+        <option value="{{ h.id }}" {% if hall and hall.id == h.id %}selected{% endif %}>
+          {{ h.name }}
+        </option>
+        {% endfor %}
+      </select>
     {% endif %}
-
   </div>
 
   <!-- CATEGORY -->
-
-  <div class="glass-card">
-    <div class="section-header">
-      <h2>Furniture Category</h2>
-    </div>
-
+  <div class="expo-card">
+    <h2 style="font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 12px;">2. Add Furniture Category</h2>
     <form method="POST" action="{% url 'cms:furniture_category_add' %}">
       {% csrf_token %}
-
       {% if hall %}
       <input type="hidden" name="hall" value="{{ hall.id }}">
       {% else %}
-      <input type="hidden" name="hall" id="category_hall">
+      <input type="hidden" name="hall" id="category_hall" value="{% if hall %}{{ hall.id }}{% endif %}">
       {% endif %}
 
-      <div class="row">
-        <input type="text" name="category" placeholder="Category Name" required />
-
-        <button class="save-btn">
-          <i class="fa-solid fa-plus"></i>
-
-          Add Category
+      <div style="display: flex; gap: 12px; max-width: 500px;">
+        <input type="text" name="category" placeholder="Category Name (e.g. Chairs, Tables)" required class="expo-input" />
+        <button type="submit" class="btn-expo-primary" style="flex-shrink: 0;">
+          <i class="fa-solid fa-plus"></i> Add Category
         </button>
       </div>
     </form>
   </div>
 
-  <!-- FURNITURE -->
-
-  <div class="glass-card">
-    <div class="section-header">
-      <h2>Add Furniture Item</h2>
-    </div>
-
+  <!-- FURNITURE ITEM -->
+  <div class="expo-card">
+    <h2 style="font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 16px;">3. Add Furniture Item</h2>
     <form method="POST" action="{% url 'cms:furniture_save' %}">
       {% csrf_token %}
 
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Category</label>
-
-          <select name="category" id="category_select" required>
-
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Category</label>
+          <select name="category" id="category_select" required class="expo-input">
             {% if categories %}
-
-            {% for category in categories %}
-
-            <option value="{{ category.id }}">
-
-              {{ category.name }}
-
-            </option>
-
-            {% endfor %}
-
+              {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
             {% else %}
-
-            <option value="">
-
-              Select Hall First
-
-            </option>
-
+              <option value="">Select Hall First</option>
             {% endif %}
-
           </select>
         </div>
 
-        <div class="form-group">
-          <label>Name</label>
-
-          <input type="text" name="name" required />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Item Name</label>
+          <input type="text" name="name" placeholder="e.g. Banquet Chair" required class="expo-input" />
         </div>
 
-        <div class="form-group">
-          <label>Price</label>
-
-          <input type="number" step="0.01" name="price" />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Price (₹)</label>
+          <input type="number" step="0.01" name="price" placeholder="0.00" class="expo-input" />
         </div>
 
-        <div class="form-group">
-          <label>Unit</label>
-
-          <input type="text" name="unit" />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Unit</label>
+          <input type="text" name="unit" placeholder="e.g. pcs" class="expo-input" />
         </div>
 
-        <div class="form-group">
-          <label>Default Qty</label>
-
-          <input type="number" name="default_quantity" value="0" />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Default Qty</label>
+          <input type="number" name="default_quantity" value="0" class="expo-input" />
         </div>
 
-        <div class="form-group">
-          <label>Min Qty</label>
-
-          <input type="number" name="min_quantity" value="0" />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Min Qty</label>
+          <input type="number" name="min_quantity" value="0" class="expo-input" />
         </div>
 
-        <div class="form-group">
-          <label>Max Qty</label>
-
-          <input type="number" name="max_quantity" value="100" />
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">Max Qty</label>
+          <input type="number" name="max_quantity" value="100" class="expo-input" />
         </div>
 
-        <div class="form-group checkbox">
-          <label><input type="checkbox" name="is_required" />Required</label>
+        <div style="display: flex; align-items: flex-end; padding-bottom: 8px;">
+          <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-main);">
+            <input type="checkbox" name="is_required" style="accent-color: var(--primary);" /> Required Item
+          </label>
         </div>
       </div>
 
-      <div class="submit-box">
-        <button type="submit" class="save-btn">
-          <i class="fa-solid fa-floppy-disk"></i>
-
-          Save Furniture
+      <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <button type="submit" class="btn-expo-primary">
+          <i class="fa-solid fa-save"></i> Save Furniture
         </button>
       </div>
     </form>
   </div>
 </div>
 
+<script>
+  document.getElementById('hall_select')?.addEventListener('change', function() {
+    var categoryHall = document.getElementById('category_hall');
+    if (categoryHall) categoryHall.value = this.value;
+  });
+</script>
 {% endblock %}
-

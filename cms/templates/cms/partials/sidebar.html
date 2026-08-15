@@ -1,9 +1,16 @@
-<aside class="sidebar">
+{% load static %}
+
+<aside class="sidebar" id="cmsSidebar">
   <div class="logo">
-    <h2>Royal<span>CMS</span></h2>
+    <h2>Royal<span class="logo-accent">CMS</span></h2>
+    <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
 
   <ul class="menu">
+    <li class="menu-section">Main Navigation</li>
+
     <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
       <a href="{% url 'cms:dashboard' %}">
         <i class="fa-solid fa-gauge-high"></i>
@@ -21,10 +28,11 @@
     <li class="{% if request.resolver_match.url_name == 'customer_list' or request.resolver_match.url_name == 'customer_detail' or request.resolver_match.url_name == 'customer_edit' %}active{% endif %}">
       <a href="{% url 'cms:customer_list' %}">
         <i class="fa-solid fa-users"></i>
-
         <span>Customers</span>
       </a>
     </li>
+
+    <li class="menu-section">Venue & Setup</li>
 
     <li class="{% if request.resolver_match.url_name == 'hall_list' or request.resolver_match.url_name == 'cms_hall_detail' or request.resolver_match.url_name == 'hall_add' or request.resolver_match.url_name == 'hall_edit' %}active{% endif %}">
       <a href="{% url 'cms:hall_list' %}">
@@ -36,7 +44,6 @@
     <li class="{% if 'room' in request.path %}active{% endif %}">
       <a href="{% url 'cms:room_list' %}">
         <i class="fa-solid fa-bed"></i>
-
         <span>Rooms</span>
       </a>
     </li>
@@ -55,7 +62,8 @@
       </a>
     </li>
 
-    <!-- SERVICES NAVIGATION LINK -->
+    <li class="menu-section">Services & Media</li>
+
     <li class="{% if '/service' in request.path %}active{% endif %}">
       <a href="{% url 'cms:service_list' %}">
         <i class="fa-solid fa-concierge-bell"></i>
@@ -66,7 +74,6 @@
     <li class="{% if 'catering' in request.path %}active{% endif %}">
       <a href="{% url 'cms:catering_list' %}">
         <i class="fa-solid fa-utensils"></i>
-
         <span>Catering</span>
       </a>
     </li>
@@ -77,14 +84,33 @@
         <span>Gallery Manager</span>
       </a>
     </li>
-    
+
+    {% if is_superadmin %}
+    <li class="menu-section">Administration</li>
+
+    <li class="{% if request.resolver_match.url_name == 'admin_management' %}active{% endif %}">
+      <a href="{% url 'cms:admin_management' %}">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Admin Management</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if is_developer %}
+    <li class="{% if request.resolver_match.url_name == 'developer_panel' %}active{% endif %}">
+      <a href="{% url 'cms:developer_panel' %}">
+        <i class="fa-solid fa-code-branch"></i>
+        <span>Developer Panel</span>
+      </a>
+    </li>
+    {% endif %}
   </ul>
 
   <div class="logout">
     <a href="{% url 'cms:admin_logout' %}">
       <i class="fa-solid fa-right-from-bracket"></i>
-
-      Logout
+      <span>Logout</span>
     </a>
   </div>
 </aside>
+

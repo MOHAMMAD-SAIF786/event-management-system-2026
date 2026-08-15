@@ -5,270 +5,106 @@
   Our Gallery - Royal Palace
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
+{% endblock %}
+
 {% block content %}
-  <style>
-    .gallery-section {
-      background-color: #ffffff;
-      padding: 50px 0 80px 0;
-      min-height: 70vh;
-    }
-    
-    .gallery-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    
-    .subtitle {
-      color: #d97706;
-      font-size: 0.8rem;
-      letter-spacing: 3px;
-      font-weight: 600;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 5px;
-    }
-    
-    .main-title {
-      font-family: 'Playfair Display', serif;
-      font-style: italic;
-      font-size: 3.2rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-    }
-    
-    /* Category Filter Buttons */
-    .filter-btn-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 50px;
-    }
-    
-    .filter-btn {
-      background: transparent;
-      border: 1px solid #e5e7eb;
-      color: #4b5563;
-      font-size: 0.8rem;
-      letter-spacing: 2px;
-      font-weight: 600;
-      padding: 10px 28px;
-      border-radius: 30px;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.3s ease;
-    }
-    
-    .filter-btn:hover {
-      border-color: #d97706;
-      color: #d97706;
-    }
-    
-    .filter-btn.active {
-      background-color: #f59e0b;
-      border-color: #f59e0b;
-      color: #ffffff;
-      font-weight: 700;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-    
-    /* Gallery Card Styling */
-    .gallery-item-wrapper {
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      height: 280px;
-    }
-    
-    .gallery-item-wrapper:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
-    }
-    
-    .gallery-item-wrapper img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      border-radius: 20px;
-    }
-    
-    .no-images-box {
-      text-align: center;
-      padding: 60px 20px;
-      color: #6b7280;
-    }
-    
-    .filter-btn.active {
-      background-color: #ffc107 !important;
-      border-color: #ffc107 !important;
-      color: #000 !important;
-      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
-    }
-    
-    /* Card Box Hover Effects */
-    .gallery-item-wrapper {
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .gallery-item-wrapper:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15) !important;
-    }
-    
-    /* Image Scaling & Fixed Fit */
-    .gallery-img {
-      object-fit: cover !important; /* Image crop ho kar fit hogi, stretch nahi hogi */
-      transition: transform 0.4s ease;
-    }
-    
-    .gallery-item-wrapper:hover .gallery-img {
-      transform: scale(1.08); /* Zoom Effect */
-    }
-    
-    /* Animation when filtering */
-    .gallery-card {
-      transition: all 0.4s ease-in-out;
-    }
-    
-    /* Pinterest Masonry Layout */
-    .masonry-grid {
-      column-count: 3; /* Desktop par 3 Columns */
-      column-gap: 20px; /* Space between columns */
-    }
-    
-    .masonry-item {
-      break-inside: avoid;
-      margin-bottom: 20px; /* Space between rows */
-      transition: all 0.4s ease-in-out;
-    }
-    
-    /* Rounded Card Design */
-    .gallery-item-wrapper {
-      border-radius: 24px !important; /* Premium Rounded Corner like screenshot */
-      overflow: hidden;
-      background: #111;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .gallery-item-wrapper img {
-      display: block;
-      width: 100%;
-      height: auto; /* Natural Image Ratio without stretching */
-      border-radius: 24px;
-      transition: transform 0.4s ease;
-    }
-    
-    /* Hover Zoom Effect */
-    .gallery-item-wrapper:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15) !important;
-    }
-    
-    .gallery-item-wrapper:hover img {
-      transform: scale(1.03);
-    }
-    
-    /* Filter Active Button Style */
-    .filter-btn.active {
-      background-color: #ffffff !important;
-      border-color: #ffffff !important;
-      color: #000000 !important;
-      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
-    }
-    
-    /* Responsive Columns for Mobile & Tablet */
-    @media (max-width: 992px) {
-      .masonry-grid {
-        column-count: 2; /* Tablet: 2 Columns */
-      }
-    }
-    
-    @media (max-width: 576px) {
-      .masonry-grid {
-        column-count: 1; /* Mobile: 1 Column */
-      }
-    }
-  </style>
+<section class="gallery-section">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="gallery-header">
+      <span class="subtitle">THE COLLECTION</span>
+      <h1 class="main-title">Our Gallery</h1>
+    </div>
 
-  <section class="gallery-section py-5 bg-dark text-white">
-    <div class="container">
-      <!-- Header Section -->
-      <div class="gallery-header text-center mb-4">
-        <span class="subtitle text-warning fw-bold text-uppercase tracking-wide small">THE COLLECTION</span>
-        <h1 class="main-title display-5 fw-bold text-white mt-1" style="font-family: serif;">Our Gallery</h1>
-      </div>
+    <!-- Filter Bar -->
+    <div class="filter-btn-container">
+      <button class="filter-btn active" onclick="filterGallery('all', this)">ALL</button>
+      {% for cat in categories %}
+        <button class="filter-btn" onclick="filterGallery('cat-{{ cat.id }}', this)">{{ cat.name|upper }}</button>
+      {% endfor %}
+    </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-btn-container d-flex justify-content-center gap-2 mb-5 flex-wrap">
-        <button class="filter-btn btn btn-outline-light rounded-pill px-4 py-2 fw-semibold active" onclick="filterGallery('all', this)">ALL</button>
-        {% for cat in categories %}
-          <button class="filter-btn btn btn-outline-light rounded-pill px-4 py-2 fw-semibold" onclick="filterGallery('cat-{{ cat.id }}', this)">{{ cat.name|upper }}</button>
-        {% endfor %}
-      </div>
-
-      <!-- Masonry Grid Layout -->
-      <div class="masonry-grid" id="gallery-grid">
-        {% for item in items %}
-          <div class="masonry-item gallery-card cat-{{ item.category.id }}">
-            <div class="gallery-item-wrapper rounded-4 overflow-hidden position-relative">
-              <img src="{{ item.image.url }}" alt="{{ item.category.name }}" loading="lazy" class="w-100 img-fluid" />
+    <!-- Masonry Grid -->
+    <div class="masonry-grid" id="galleryGrid">
+      {% for item in items %}
+        <div class="masonry-item gallery-card cat-{{ item.category.id }}">
+          <div class="gallery-item-wrapper">
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" class="img-fluid gallery-img" loading="lazy" />
+            <div class="gallery-item-overlay">
+              <button type="button" class="view-full-btn" onclick="openImageModal('{{ item.image.url }}', '{{ item.title|escapejs }}')">
+                <i class="fa-solid fa-expand"></i> View Full Image
+              </button>
             </div>
           </div>
-        {% empty %}
-          <div class="no-images-box text-center py-5 bg-secondary text-white rounded-4 w-100">
-            <i class="fas fa-images fa-3x mb-3 text-warning"></i>
-            <h5 class="fw-bold">No gallery images uploaded yet!</h5>
-            <p class="small mb-0">Please add categories and upload images from the CMS Admin Dashboard.</p>
-          </div>
-        {% endfor %}
-      </div>
+        </div>
+      {% empty %}
+        <div class="no-images-box w-100 text-center py-5">
+          <p class="fs-5">No gallery images found.</p>
+        </div>
+      {% endfor %}
     </div>
-  </section>
-  <!-- Filter Script -->
-  <script>
-    function filterGallery(categoryClass, button) {
-      // 1. Toggle Active Class on Buttons
-      let buttons = document.querySelectorAll('.filter-btn')
-      buttons.forEach((btn) => btn.classList.remove('active'))
-      button.classList.add('active')
+  </div>
+</section>
+
+<!-- IMAGE LIGHTBOX MODAL -->
+<div id="imageLightboxModal" class="img-modal-overlay" onclick="closeImageModalOnBackdrop(event)">
+  <div class="img-modal-container">
+    <button type="button" class="img-modal-close" onclick="closeImageModal()" aria-label="Close modal">&times;</button>
+    <img id="lightboxModalImg" src="" alt="Full view" />
+    <div id="lightboxModalCaption" class="img-modal-caption"></div>
+  </div>
+</div>
+
+<script>
+  function filterGallery(category, btnElement) {
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach((btn) => btn.classList.remove('active'));
+    btnElement.classList.add('active');
+
+    const items = document.querySelectorAll('.gallery-card');
+
+    items.forEach((item) => {
+      if (category === 'all' || item.classList.contains(category)) {
+        item.style.display = 'block';
+        item.style.opacity = '1';
+      } else {
+        item.style.display = 'none';
+        item.style.opacity = '0';
+      }
+    });
+  }
+
+  function openImageModal(imgUrl, captionText) {
+    const modal = document.getElementById('imageLightboxModal');
+    const modalImg = document.getElementById('lightboxModalImg');
+    const modalCaption = document.getElementById('lightboxModalCaption');
+    if (!modal || !modalImg) return;
     
-      // 2. Filter Grid Items
-      let items = document.querySelectorAll('.gallery-card')
-      items.forEach((item) => {
-        if (categoryClass === 'all' || item.classList.contains(categoryClass)) {
-          item.style.display = 'block'
-          setTimeout(() => {
-            item.style.opacity = '1'
-            item.style.transform = 'scale(1)'
-          }, 50)
-        } else {
-          item.style.opacity = '0'
-          item.style.transform = 'scale(0.8)'
-          setTimeout(() => {
-            item.style.display = 'none'
-          }, 300)
-        }
-      })
+    modalImg.src = imgUrl;
+    modalCaption.innerText = captionText || '';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeImageModal() {
+    const modal = document.getElementById('imageLightboxModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function closeImageModalOnBackdrop(event) {
+    if (event.target.id === 'imageLightboxModal') {
+      closeImageModal();
     }
-  </script>
-  <script>
-    function filterGallery(categoryClass, button) {
-      let buttons = document.querySelectorAll('.filter-btn')
-      buttons.forEach((btn) => btn.classList.remove('active'))
-      button.classList.add('active')
-    
-      let items = document.querySelectorAll('.gallery-card')
-      items.forEach((item) => {
-        if (categoryClass === 'all' || item.classList.contains(categoryClass)) {
-          item.style.display = 'block'
-        } else {
-          item.style.display = 'none'
-        }
-      })
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeImageModal();
     }
-  </script>
+  });
+</script>
 {% endblock %}
